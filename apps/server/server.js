@@ -5,14 +5,13 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 // Load env based on NODE_ENV
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 console.log(process.env.NODE_ENV, `Loading environment from: ${envFile}`);
-require('dotenv').config({ path: path.join(__dirname, envFile) });
+require('dotenv').config({ path: path.join(__dirname, envFile), override: true });
 
-// Fallback to .env if specific env file fails or variables missing
-require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const Character = require('./models/Character');
 
