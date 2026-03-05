@@ -52,7 +52,7 @@ const MONGO_AUTH_SOURCE = process.env.MONGO_AUTH_SOURCE || 'admin';
 
 let MONGODB_URI;
 if (MONGO_USER && MONGO_PASS) {
-  MONGODB_URI = `mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}?authSource=${MONGO_AUTH_SOURCE}`;
+  MONGODB_URI = `mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}?authSource=${MONGO_AUTH_SOURCE}&directConnection=true`;
 } else {
   MONGODB_URI = `mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}`;
 }
