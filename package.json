@@ -1,0 +1,24 @@
+{
+  "name": "bouncyballs-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "server": "npm run start --workspace=apps/server",
+    "client": "npm run dev --workspace=apps/client",
+    "admin": "npm run dev --workspace=apps/admin",
+    "install:all": "npm install",
+    "seed": "npm run seed --workspace=apps/server",
+    "build:client": "npm run build --workspace=apps/client",
+    "build:admin": "npm run build --workspace=apps/admin",
+    "build:all": "npm run build:client && npm run build:admin",
+    "start:prod": "npm run build:all && npm run start --workspace=apps/server",
+    "pm2:start": "pm2 start apps/server/ecosystem.config.js --env production",
+    "pm2:stop": "pm2 stop apps/server/ecosystem.config.js",
+    "pm2:restart": "pm2 restart apps/server/ecosystem.config.js",
+    "pm2:delete": "pm2 delete apps/server/ecosystem.config.js",
+    "pm2:logs": "pm2 logs"
+  }
+}
