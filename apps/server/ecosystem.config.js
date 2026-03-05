@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'bouncyballs-server',
-      cwd: '/www/wwwroot/bouncyballs/apps/server', // 显式指定工作目录到 server 目录
+      cwd: __dirname, // 动态获取当前文件所在目录作为工作目录
       script: 'server.js', // 相对于 cwd 的路径
       instances: 1, // 或者 'max' 利用多核
       autorestart: true,
