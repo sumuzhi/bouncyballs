@@ -14,8 +14,8 @@ module.exports = {
       env_production: {
         NODE_ENV: 'production'
       },
-      error_file: '../../../logs/err.log', // 日志路径建议保持在外层，或者放到 ./logs
-      out_file: '../../../logs/out.log',
+      error_file: '../../logs/err.log', // 日志路径建议保持在外层，或者放到 ./logs
+      out_file: '../../logs/out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss'
     }
   ]

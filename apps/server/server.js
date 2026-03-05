@@ -8,9 +8,9 @@ const jwt = require('jsonwebtoken');
 
 // Load env based on NODE_ENV
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
-console.log(process.env.NODE_ENV`Loading environment from: ${envFile}`);
+console.log(process.env.NODE_ENV, `Loading environment from: ${envFile}`);
 require('dotenv').config({ path: path.join(__dirname, envFile) });
-JSON.stringify
+
 // Fallback to .env if specific env file fails or variables missing
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
