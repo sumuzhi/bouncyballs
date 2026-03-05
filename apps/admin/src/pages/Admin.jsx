@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Form, Input, Button, List, Typography, Pagination, message, Modal, Spin } from 'antd';
-import { LogoutOutlined, DeleteOutlined, RobotOutlined, SaveOutlined, EditOutlined, SoundOutlined, EyeOutlined } from '@ant-design/icons';
+import { Layout, Form, Input, Button, List, Typography, Pagination, message, Modal, Spin, Card, Tooltip, Radio } from 'antd';
+import { LogoutOutlined, DeleteOutlined, RobotOutlined, SaveOutlined, EditOutlined, SoundOutlined, EyeOutlined, AppstoreOutlined, BarsOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
@@ -15,6 +15,7 @@ const Admin = () => {
   const [pageSize, setPageSize] = useState(10);
   const [aiLoading, setAiLoading] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true); // 新增：授权检查状态
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'card'
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
@@ -183,48 +184,85 @@ const Admin = () => {
         </div>
       </Header>
       <Content style={{ padding: '20px', maxWidth: 900, margin: '0 auto', width: '100%' }}>
-        <h2 className="list-header">已录入汉字</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <h2 className="list-header" style={{ margin: 0 }}>已录入汉字</h2>
+          <Radio.Group value={viewMode} onChange={(e) => setViewMode(e.target.value)} buttonStyle="solid">
+            <Radio.Button value="list"><BarsOutlined /></Radio.Button>
+            <Radio.Button value="card"><AppstoreOutlined /></Radio.Button>
+          </Radio.Group>
+        </div>
         
-        <div className="neo-card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className={viewMode === 'list' ? "neo-card" : ""} style={viewMode === 'list' ? { padding: 0, overflow: 'hidden' } : {}}>
           <List
             loading={loading}
+            grid={viewMode === 'card' ? { gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 4, xxl: 6 } : undefined}
             itemLayout="horizontal"
             dataSource={data}
             renderItem={(item) => (
               <List.Item
-                actions={[
-                  <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(item)}>编辑</Button>,
-                  <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(item._id)}>删除</Button>
-                ]}
-                style={{ padding: '20px', borderBottom: '1px solid #F0F0F5' }}
+                actions={viewMode === 'list' ? [
+                  <Tooltip title="编辑"><Button type="text" shape="circle" icon={<EditOutlined />} onClick={() => handleEdit(item)} /></Tooltip>,
+                  <Tooltip title="删除"><Button type="text" danger shape="circle" icon={<DeleteOutlined />} onClick={() => handleDelete(item._id)} /></Tooltip>
+                ] : []}
+                style={viewMode === 'list' ? { padding: '20px', borderBottom: '1px solid #F0F0F5' } : { marginBottom: 16 }}
               >
-                <List.Item.Meta
-                  title={
-                    <span style={{ fontSize: 20, fontWeight: 700, color: '#4A4A68', display: 'flex', alignItems: 'center' }}>
-                      {item.char}
-                      <span style={{ fontSize: 14, fontWeight: 600, color: '#9D84FF', background: '#F0EDFF', padding: '2px 8px', borderRadius: 10, marginLeft: 10 }}>
-                        {item.pinyin}
+                {viewMode === 'list' ? (
+                  <List.Item.Meta
+                    title={
+                      <span style={{ fontSize: 20, fontWeight: 700, color: '#4A4A68', display: 'flex', alignItems: 'center' }}>
+                        {item.char}
+                        <span style={{ fontSize: 14, fontWeight: 600, color: '#9D84FF', background: '#F0EDFF', padding: '2px 8px', borderRadius: 10, marginLeft: 10 }}>
+                          {item.pinyin}
+                        </span>
+                        {item.audio && (
+                          <Button 
+                              type="text" 
+                              icon={<SoundOutlined />} 
+                              style={{ color: '#9D84FF', marginLeft: 5 }}
+                              onClick={() => playAudio(item.audio)}
+                          />
+                        )}
+                        {item.stroke && (
+                          <Button
+                              type="text"
+                              icon={<EyeOutlined />}
+                              style={{ color: '#FFB6E1', marginLeft: 5 }}
+                              onClick={() => setPreviewStroke(item.stroke)}
+                          />
+                        )}
                       </span>
-                      {item.audio && (
-                        <Button 
-                            type="text" 
-                            icon={<SoundOutlined />} 
-                            style={{ color: '#9D84FF', marginLeft: 5 }}
-                            onClick={() => playAudio(item.audio)}
-                        />
-                      )}
-                      {item.stroke && (
-                        <Button
-                            type="text"
-                            icon={<EyeOutlined />}
-                            style={{ color: '#FFB6E1', marginLeft: 5 }}
-                            onClick={() => setPreviewStroke(item.stroke)}
-                        />
-                      )}
-                    </span>
-                  }
-                  description={<span style={{ color: '#9FA0C3' }}>{item.examples.join(', ')}</span>}
-                />
+                    }
+                    description={<span style={{ color: '#9FA0C3' }}>{item.examples.join(', ')}</span>}
+                  />
+                ) : (
+                  <Card
+                    hoverable
+                    actions={[
+                      <Tooltip title="编辑"><EditOutlined key="edit" onClick={() => handleEdit(item)} /></Tooltip>,
+                      <Tooltip title="删除"><DeleteOutlined key="delete" style={{ color: '#ff4d4f' }} onClick={() => handleDelete(item._id)} /></Tooltip>
+                    ]}
+                  >
+                    <Card.Meta
+                      title={
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 24, fontWeight: 700, color: '#4A4A68' }}>{item.char}</span>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: '#9D84FF', background: '#F0EDFF', padding: '2px 8px', borderRadius: 10 }}>
+                            {item.pinyin}
+                          </span>
+                        </div>
+                      }
+                      description={
+                        <div style={{ marginTop: 10 }}>
+                           <div style={{ color: '#9FA0C3', marginBottom: 8, height: 40, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.examples.join(', ')}</div>
+                           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                              {item.audio && <Tooltip title="播放读音"><Button size="small" type="text" icon={<SoundOutlined />} style={{ color: '#9D84FF' }} onClick={() => playAudio(item.audio)} /></Tooltip>}
+                              {item.stroke && <Tooltip title="查看笔画"><Button size="small" type="text" icon={<EyeOutlined />} style={{ color: '#FFB6E1' }} onClick={() => setPreviewStroke(item.stroke)} /></Tooltip>}
+                           </div>
+                        </div>
+                      }
+                    />
+                  </Card>
+                )}
               </List.Item>
             )}
           />
