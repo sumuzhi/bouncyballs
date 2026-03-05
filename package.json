@@ -15,7 +15,7 @@
     "build:admin": "npm run build --workspace=apps/admin",
     "build:all": "npm run build:client && npm run build:admin",
     "start:prod": "npm run build:all && npm run start --workspace=apps/server",
-    "pm2:start": "pm2 start apps/server/ecosystem.config.js --env production",
+    "pm2:start": "pm2 start apps/server/ecosystem.config.js --env prod",
     "pm2:stop": "pm2 stop apps/server/ecosystem.config.js",
     "pm2:restart": "pm2 restart apps/server/ecosystem.config.js",
     "pm2:delete": "pm2 delete apps/server/ecosystem.config.js",

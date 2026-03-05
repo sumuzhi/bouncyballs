@@ -39,3 +39,4 @@ apps/server/logs/
 
 # Optional: Ignore package-lock.json if you prefer yarn.lock
 # package-lock.json
+.pm2
