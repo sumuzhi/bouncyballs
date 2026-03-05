@@ -1,171 +1,62 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Form, Input, Button, List, Typography, Pagination, message, Modal, Spin, Card, Tooltip, Radio } from 'antd';
-import { LogoutOutlined, DeleteOutlined, RobotOutlined, SaveOutlined, EditOutlined, SoundOutlined, EyeOutlined, AppstoreOutlined, BarsOutlined } from '@ant-design/icons';
+import React, { useState, useCallback } from 'react';
+import { Layout, Button, Typography, Pagination, Radio } from 'antd';
+import { LogoutOutlined, RobotOutlined, AppstoreOutlined, BarsOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import useCharacters from '../hooks/useCharacters';
+import useAudioPlayer from '../hooks/useAudioPlayer';
+import CharacterList from '../components/admin/CharacterList';
+import CharacterModal from '../components/admin/CharacterModal';
+import StrokeModal from '../components/admin/StrokeModal';
 
 const { Header, Content } = Layout;
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 const Admin = () => {
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [isAuthChecking, setIsAuthChecking] = useState(true); // 新增：授权检查状态
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'card'
-  const [form] = Form.useForm();
+  const { 
+    data, 
+    loading, 
+    pagination, 
+    fetchData, 
+    handleDelete 
+  } = useCharacters();
+  
+  const { playingId, playAudio } = useAudioPlayer();
   const navigate = useNavigate();
 
-  const [editingId, setEditingId] = useState(null); // Track editing state
- const [isModalOpen, setIsModalOpen] = useState(false); // Edit Modal visibility
-  const [currentAudio, setCurrentAudio] = useState(null); // Current audio data (base64)
-  const [currentStroke, setCurrentStroke] = useState(null); // Current stroke data (base64)
-
-  useEffect(() => {
-    fetchData(1);
-  }, []);
-
-  const fetchData = async (currentPage = 1) => {
-    setLoading(true);
-    try {
-      const response = await api.get(`/characters?page=${currentPage}&limit=${pageSize}`);
-      setData(response.data.data);
-      setTotal(response.data.meta.total);
-      setPage(response.data.meta.page);
-    } catch (error) {
-      message.error('获取数据失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'card'
+  const [editingItem, setEditingItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [previewStroke, setPreviewStroke] = useState(null);
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     navigate('/login');
   };
 
-  const handleDelete = (id) => {
-    Modal.confirm({
-      title: '确认删除',
-      content: '你确定要删除这个汉字吗？',
-      onOk: async () => {
-        try {
-          await api.delete(`/characters/${id}`);
-          message.success('删除成功');
-          fetchData(page);
-        } catch (error) {
-          message.error('删除失败');
-        }
-      },
-    });
-  };
-
-  const [previewStroke, setPreviewStroke] = useState(null); // Stroke preview
-
-  const playAudio = (audioBase64) => {
-    if (!audioBase64) return;
-    const audio = new Audio(audioBase64);
-    audio.play().catch(e => message.error('播放失败'));
-  };
-
-  const handleEdit = (item) => {
-    setEditingId(item._id);
-    setCurrentAudio(item.audio);
-    setCurrentStroke(item.stroke);
-    form.setFieldsValue({
-      char: item.char,
-      pinyin: item.pinyin,
-      examples: item.examples.join(', '),
-    });
+  const handleEdit = useCallback((item) => {
+    setEditingItem(item);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setCurrentAudio(null);
-    setCurrentStroke(null);
-    form.resetFields();
+  const handleAdd = useCallback(() => {
+    setEditingItem(null);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
     setIsModalOpen(false);
-  };
+    setEditingItem(null);
+  }, []);
 
-  const handleAdd = () => {
-    setEditingId(null);
-    setCurrentAudio(null);
-    setCurrentStroke(null);
-    form.resetFields();
-    setIsModalOpen(true);
-  };
-
-  const handleAiGenerate = async () => {
-    const char = form.getFieldValue('char');
-    if (!char) {
-      message.warning('请先输入汉字');
-      return;
+  const handleModalSuccess = useCallback(() => {
+    handleModalClose();
+    // If adding new, go to first page; if editing, refresh current
+    if (editingItem) {
+        fetchData(pagination.current);
+    } else {
+        fetchData(1);
     }
-    setAiLoading(true);
-    try {
-      const response = await api.get(`/ai-generate?char=${encodeURIComponent(char)}`);
-      form.setFieldsValue({
-        pinyin: response.data.pinyin,
-        examples: response.data.examples.join(', '),
-      });
-      
-      let msg = 'AI 生成成功';
-      if (response.data.audio) {
-          setCurrentAudio(response.data.audio);
-          msg += ' (含读音)';
-      }
-      if (response.data.stroke) {
-          setCurrentStroke(response.data.stroke);
-          msg += ' (含笔画)';
-      }
-      message.success(msg);
-      
-    } catch (error) {
-      message.error(error.response?.data?.message || 'AI 生成失败');
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  const onFinish = async (values) => {
-    setLoading(true);
-    const payload = {
-      ...values,
-      examples: values.examples ? values.examples.split(/[,，]\s*/).filter(ex => ex.trim() !== '') : [],
-      audio: currentAudio,
-      stroke: currentStroke
-    };
-
-    try {
-      if (editingId) {
-        // Update
-        await api.put(`/characters/${editingId}`, payload);
-        message.success('更新成功');
-        setIsModalOpen(false);
-        setEditingId(null);
-        setCurrentAudio(null);
-        setCurrentStroke(null);
-        form.resetFields(); // Reset form after modal close
-        fetchData(page); // Refresh current page
-      } else {
-        // Create
-        await api.post('/characters', payload);
-        message.success(`成功添加: ${values.char}`);
-        form.resetFields();
-        setCurrentAudio(null);
-        setCurrentStroke(null);
-        fetchData(1); // Go to first page
-      }
-    } catch (error) {
-      message.error(error.response?.data?.message || (editingId ? '更新失败' : '添加失败'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [editingItem, fetchData, pagination.current, handleModalClose]);
 
   return (
     <Layout style={{ minHeight: '100vh', background: '#F9FAFC' }}>
@@ -192,158 +83,42 @@ const Admin = () => {
           </Radio.Group>
         </div>
         
-        <div className={viewMode === 'list' ? "neo-card" : ""} style={viewMode === 'list' ? { padding: 0, overflow: 'hidden' } : {}}>
-          <List
+        <CharacterList 
+            viewMode={viewMode}
+            data={data}
             loading={loading}
-            grid={viewMode === 'card' ? { gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 4, xxl: 6 } : undefined}
-            itemLayout="horizontal"
-            dataSource={data}
-            renderItem={(item) => (
-              <List.Item
-                actions={viewMode === 'list' ? [
-                  <Tooltip title="编辑"><Button type="text" shape="circle" icon={<EditOutlined />} onClick={() => handleEdit(item)} /></Tooltip>,
-                  <Tooltip title="删除"><Button type="text" danger shape="circle" icon={<DeleteOutlined />} onClick={() => handleDelete(item._id)} /></Tooltip>
-                ] : []}
-                style={viewMode === 'list' ? { padding: '20px', borderBottom: '1px solid #F0F0F5' } : { marginBottom: 16 }}
-              >
-                {viewMode === 'list' ? (
-                  <List.Item.Meta
-                    title={
-                      <span style={{ fontSize: 20, fontWeight: 700, color: '#4A4A68', display: 'flex', alignItems: 'center' }}>
-                        {item.char}
-                        <span style={{ fontSize: 14, fontWeight: 600, color: '#9D84FF', background: '#F0EDFF', padding: '2px 8px', borderRadius: 10, marginLeft: 10 }}>
-                          {item.pinyin}
-                        </span>
-                        {item.audio && (
-                          <Button 
-                              type="text" 
-                              icon={<SoundOutlined />} 
-                              style={{ color: '#9D84FF', marginLeft: 5 }}
-                              onClick={() => playAudio(item.audio)}
-                          />
-                        )}
-                        {item.stroke && (
-                          <Button
-                              type="text"
-                              icon={<EyeOutlined />}
-                              style={{ color: '#FFB6E1', marginLeft: 5 }}
-                              onClick={() => setPreviewStroke(item.stroke)}
-                          />
-                        )}
-                      </span>
-                    }
-                    description={<span style={{ color: '#9FA0C3' }}>{item.examples.join(', ')}</span>}
-                  />
-                ) : (
-                  <Card
-                    hoverable
-                    actions={[
-                      <Tooltip title="编辑"><EditOutlined key="edit" onClick={() => handleEdit(item)} /></Tooltip>,
-                      <Tooltip title="删除"><DeleteOutlined key="delete" style={{ color: '#ff4d4f' }} onClick={() => handleDelete(item._id)} /></Tooltip>
-                    ]}
-                  >
-                    <Card.Meta
-                      title={
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 24, fontWeight: 700, color: '#4A4A68' }}>{item.char}</span>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: '#9D84FF', background: '#F0EDFF', padding: '2px 8px', borderRadius: 10 }}>
-                            {item.pinyin}
-                          </span>
-                        </div>
-                      }
-                      description={
-                        <div style={{ marginTop: 10 }}>
-                           <div style={{ color: '#9FA0C3', marginBottom: 8, height: 40, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.examples.join(', ')}</div>
-                           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                              {item.audio && <Tooltip title="播放读音"><Button size="small" type="text" icon={<SoundOutlined />} style={{ color: '#9D84FF' }} onClick={() => playAudio(item.audio)} /></Tooltip>}
-                              {item.stroke && <Tooltip title="查看笔画"><Button size="small" type="text" icon={<EyeOutlined />} style={{ color: '#FFB6E1' }} onClick={() => setPreviewStroke(item.stroke)} /></Tooltip>}
-                           </div>
-                        </div>
-                      }
-                    />
-                  </Card>
-                )}
-              </List.Item>
-            )}
-          />
-          {total > 0 && (
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onPlayAudio={playAudio}
+            onPreviewStroke={setPreviewStroke}
+            playingId={playingId}
+        />
+
+        {pagination.total > 0 && (
             <div style={{ padding: '20px', display: 'flex', justifyContent: 'center' }}>
-              <Pagination
-                current={page}
-                total={total}
-                pageSize={pageSize}
+                <Pagination
+                current={pagination.current}
+                total={pagination.total}
+                pageSize={pagination.pageSize}
                 onChange={(p) => fetchData(p)}
                 showSizeChanger={false}
-              />
+                />
             </div>
-          )}
-        </div>
+        )}
 
-        <Modal
-            open={!!previewStroke}
-            footer={null}
+        <StrokeModal 
+            visible={!!previewStroke}
+            stroke={previewStroke}
             onCancel={() => setPreviewStroke(null)}
-            title="笔画演示"
-            destroyOnClose
-        >
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}>
-                {previewStroke && <img src={previewStroke} alt="笔画" style={{ maxWidth: '100%', maxHeight: 300 }} />}
-            </div>
-        </Modal>
+        />
 
-        <Modal
-            title={editingId ? "编辑汉字" : "添加汉字"}
-            open={isModalOpen}
-            onCancel={handleCancelEdit}
-            footer={null}
-            destroyOnClose
-        >
-            <Form form={form} layout="vertical" onFinish={onFinish} size="large">
-                <Form.Item name="char" label="汉字" rules={[{ required: true, message: '请输入汉字' }]}>
-                    <Input placeholder="输入单个汉字" disabled={!!editingId} style={{ background: editingId ? '#EFEFEF' : '#F4F6FA', border: 'none' }} />
-                </Form.Item>
-                <Form.Item name="pinyin" label="拼音">
-                    <Input placeholder="可选 (AI生成)" style={{ background: '#F4F6FA', border: 'none' }} />
-                </Form.Item>
-                <Form.Item name="examples" label="组词">
-                    <Input placeholder="可选 (AI生成)" style={{ background: '#F4F6FA', border: 'none' }} />
-                </Form.Item>
-                
-                <div style={{ display: 'flex', gap: 16, marginTop: 24 }}>
-                     <Button 
-                         icon={<RobotOutlined />} 
-                         onClick={handleAiGenerate} 
-                         loading={aiLoading}
-                         style={{ flex: 1, background: '#A0EACD', color: '#366A55', border: 'none', height: 48, fontWeight: 700 }}
-                     >
-                         AI 自动生成
-                     </Button>
-                     <Button 
-                         type="primary" 
-                         htmlType="submit" 
-                         icon={<SaveOutlined />} 
-                         loading={loading}
-                         style={{ flex: 1, background: 'linear-gradient(135deg, #9D84FF 0%, #FFB6E1 100%)', border: 'none', height: 48, fontWeight: 700 }}
-                     >
-                         {editingId ? '保存修改' : '保存汉字'}
-                     </Button>
-                 </div>
-                 {currentAudio && (
-                    <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', background: '#F0EDFF', padding: '10px', borderRadius: 12 }}>
-                        <SoundOutlined style={{ color: '#9D84FF', marginRight: 10, fontSize: 18 }} />
-                        <span style={{ marginRight: 10, color: '#4A4A68', fontSize: 14 }}>已获取发音</span>
-                        <Button size="small" type="primary" ghost onClick={() => playAudio(currentAudio)}>试听</Button>
-                    </div>
-                 )}
-                 {currentStroke && (
-                    <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', background: '#FFF0F5', padding: '10px', borderRadius: 12 }}>
-                        <EyeOutlined style={{ color: '#FF69B4', marginRight: 10, fontSize: 18 }} />
-                        <span style={{ marginRight: 10, color: '#4A4A68', fontSize: 14 }}>已获取笔画</span>
-                        <Button size="small" type="primary" ghost onClick={() => setPreviewStroke(currentStroke)}>查看</Button>
-                    </div>
-                 )}
-             </Form>
-        </Modal>
+        <CharacterModal 
+            visible={isModalOpen}
+            editingItem={editingItem}
+            onCancel={handleModalClose}
+            onSuccess={handleModalSuccess}
+            onPreviewStroke={setPreviewStroke}
+        />
       </Content>
     </Layout>
   );
