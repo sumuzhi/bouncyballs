@@ -4,6 +4,27 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+const parseCookieValue = (cookieHeader, key) => {
+  if (!cookieHeader) {
+    return '';
+  }
+  const parts = cookieHeader.split(';').map((item) => item.trim());
+  const target = parts.find((item) => item.startsWith(`${key}=`));
+  if (!target) {
+    return '';
+  }
+  return decodeURIComponent(target.slice(key.length + 1));
+};
+
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: IS_PROD,
+  sameSite: 'lax',
+  path: '/',
+  maxAge: 24 * 60 * 60 * 1000,
+});
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -22,6 +43,7 @@ const authenticateToken = (req, res, next) => {
 
 function createAuthRouter(appName) {
   const router = express.Router();
+  const shouldUsePortalCookie = appName === 'portal';
 
   router.post('/register', async (req, res) => {
     try {
@@ -45,6 +67,9 @@ function createAuthRouter(appName) {
         JWT_SECRET,
         { expiresIn: '24h' },
       );
+      if (shouldUsePortalCookie) {
+        res.cookie('portalToken', token, getCookieOptions());
+      }
       return res.status(201).json({
         token,
         user: { id: user._id, username: user.username },
@@ -73,6 +98,9 @@ function createAuthRouter(appName) {
         JWT_SECRET,
         { expiresIn: '24h' },
       );
+      if (shouldUsePortalCookie) {
+        res.cookie('portalToken', token, getCookieOptions());
+      }
       return res.json({
         token,
         user: { id: user._id, username: user.username },
@@ -94,6 +122,37 @@ function createAuthRouter(appName) {
         app: req.user.app,
       },
     });
+  });
+
+  router.post('/logout', (req, res) => {
+    if (shouldUsePortalCookie) {
+      res.clearCookie('portalToken', {
+        httpOnly: true,
+        secure: IS_PROD,
+        sameSite: 'lax',
+        path: '/',
+      });
+    }
+    return res.json({ success: true });
+  });
+
+  router.get('/nginx-verify', (req, res) => {
+    if (!shouldUsePortalCookie) {
+      return res.sendStatus(404);
+    }
+    const token = parseCookieValue(req.headers.cookie, 'portalToken');
+    if (!token) {
+      return res.sendStatus(401);
+    }
+    try {
+      const payload = jwt.verify(token, JWT_SECRET);
+      if (payload.app !== appName) {
+        return res.sendStatus(403);
+      }
+      return res.sendStatus(204);
+    } catch (err) {
+      return res.sendStatus(401);
+    }
   });
 
   return router;

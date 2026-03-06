@@ -114,3 +114,11 @@ systemctl reload nginx
 nginx -t
 systemctl reload nginx
 ```
+
+## 9. 子应用未授权拦截
+
+- `/bouncy-balls/` 通过 `auth_request /_auth_portal` 做网关鉴权，调用后端 `/api/portal/auth/nginx-verify` 校验 `portalToken`
+- 未授权会被网关 302 到 `/login?redirect=原链接`，不会渲染子应用
+- `portalToken` 由后端登录/注册接口以 HttpOnly Cookie 下发，前端不可读
+- 退出登录会调用 `/api/portal/auth/logout` 清理 HttpOnly Cookie
+- client 启动时会调用 `/api/portal/auth/verify` 二次校验，校验失败会再次跳转登录并不渲染子应用

@@ -9,7 +9,8 @@ const GameHall = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('playerUser') || '{}');
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch('/api/portal/auth/logout', { method: 'POST' }).catch(() => null);
     localStorage.removeItem('playerToken');
     localStorage.removeItem('playerUser');
     navigate('/login');

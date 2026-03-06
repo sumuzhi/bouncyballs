@@ -10,6 +10,13 @@ const { Title } = Typography;
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const getRedirectPath = () => {
+    const redirect = new URLSearchParams(window.location.search).get('redirect');
+    if (!redirect || !redirect.startsWith('/')) {
+      return '/';
+    }
+    return redirect;
+  };
 
   const onLogin = async (values) => {
     setLoading(true);
@@ -22,7 +29,12 @@ const Login = () => {
       localStorage.setItem('playerToken', res.data.token);
       localStorage.setItem('playerUser', JSON.stringify(res.data.user));
       message.success('登录成功');
-      navigate('/');
+      const redirectPath = getRedirectPath();
+      if (redirectPath === '/') {
+        navigate('/');
+      } else {
+        window.location.href = redirectPath;
+      }
     } catch (error) {
       message.error(error.response?.data?.message || '登录失败');
     } finally {
@@ -41,7 +53,12 @@ const Login = () => {
       localStorage.setItem('playerToken', res.data.token);
       localStorage.setItem('playerUser', JSON.stringify(res.data.user));
       message.success('注册成功');
-      navigate('/');
+      const redirectPath = getRedirectPath();
+      if (redirectPath === '/') {
+        navigate('/');
+      } else {
+        window.location.href = redirectPath;
+      }
     } catch (error) {
       message.error(error.response?.data?.message || '注册失败');
     } finally {
