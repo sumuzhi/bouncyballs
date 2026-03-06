@@ -3,6 +3,7 @@ import { Modal, Form, Input, Button, message } from 'antd';
 import { RobotOutlined, SaveOutlined, SoundOutlined, EyeOutlined } from '@ant-design/icons';
 import api from '../../../utils/api';
 import useAudioPlayer from '../../../hooks/useAudioPlayer';
+import styles from './index.module.less';
 
 const CharacterModal = ({ visible, editingItem, onCancel, onSuccess, onPreviewStroke }) => {
   const [form] = Form.useForm();
@@ -101,21 +102,21 @@ const CharacterModal = ({ visible, editingItem, onCancel, onSuccess, onPreviewSt
     >
       <Form form={form} layout="vertical" onFinish={onFinish} size="large">
         <Form.Item name="char" label="汉字" rules={[{ required: true, message: '请输入汉字' }]}>
-          <Input placeholder="输入单个汉字" disabled={!!editingItem} style={{ background: editingItem ? '#EFEFEF' : '#F4F6FA', border: 'none' }} />
+          <Input placeholder="输入单个汉字" disabled={!!editingItem} className={editingItem ? styles.charInputDisabled : styles.formInput} />
         </Form.Item>
         <Form.Item name="pinyin" label="拼音">
-          <Input placeholder="可选 (AI生成)" style={{ background: '#F4F6FA', border: 'none' }} />
+          <Input placeholder="可选 (AI生成)" className={styles.formInput} />
         </Form.Item>
         <Form.Item name="examples" label="组词">
-          <Input placeholder="可选 (AI生成)" style={{ background: '#F4F6FA', border: 'none' }} />
+          <Input placeholder="可选 (AI生成)" className={styles.formInput} />
         </Form.Item>
         
-        <div style={{ display: 'flex', gap: 16, marginTop: 24 }}>
+        <div className={styles.actionsRow}>
              <Button 
                  icon={<RobotOutlined />} 
                  onClick={handleAiGenerate} 
                  loading={aiLoading}
-                 style={{ flex: 1, background: '#A0EACD', color: '#366A55', border: 'none', height: 48, fontWeight: 700 }}
+                 className={styles.aiBtn}
              >
                  AI 自动生成
              </Button>
@@ -124,22 +125,22 @@ const CharacterModal = ({ visible, editingItem, onCancel, onSuccess, onPreviewSt
                  htmlType="submit" 
                  icon={<SaveOutlined />} 
                  loading={loading}
-                 style={{ flex: 1, background: 'linear-gradient(135deg, #9D84FF 0%, #FFB6E1 100%)', border: 'none', height: 48, fontWeight: 700 }}
+                 className={styles.saveBtn}
              >
                  {editingItem ? '保存修改' : '保存汉字'}
              </Button>
          </div>
          {currentAudio && (
-            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', background: '#F0EDFF', padding: '10px', borderRadius: 12 }}>
-                <SoundOutlined className={playingId === 'modal-preview' ? 'playing-icon' : ''} style={{ color: '#9D84FF', marginRight: 10, fontSize: 18 }} />
-                <span style={{ marginRight: 10, color: '#4A4A68', fontSize: 14 }}>已获取发音</span>
+           <div className={styles.infoCardAudio}>
+               <SoundOutlined className={`${styles.audioIcon} ${playingId === 'modal-preview' ? 'playing-icon' : ''}`} />
+               <span className={styles.infoText}>已获取发音</span>
                 <Button size="small" type="primary" ghost onClick={() => playAudio(currentAudio, 'modal-preview')}>试听</Button>
             </div>
          )}
          {currentStroke && (
-            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', background: '#FFF0F5', padding: '10px', borderRadius: 12 }}>
-                <EyeOutlined style={{ color: '#FF69B4', marginRight: 10, fontSize: 18 }} />
-                <span style={{ marginRight: 10, color: '#4A4A68', fontSize: 14 }}>已获取笔画</span>
+           <div className={styles.infoCardStroke}>
+               <EyeOutlined className={styles.strokeIcon} />
+               <span className={styles.infoText}>已获取笔画</span>
                 <Button size="small" type="primary" ghost onClick={() => onPreviewStroke && onPreviewStroke(currentStroke)}>查看</Button>
             </div>
          )}

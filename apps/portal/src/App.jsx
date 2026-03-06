@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import GameHall from './pages/GameHall';
 import GameViewer from './pages/GameViewer';
 import api from './utils/api';
+import styles from './App.module.less';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('playerToken');
@@ -20,7 +21,7 @@ const ProtectedRoute = ({ children }) => {
       try {
         await api.get('/portal/auth/verify');
         if (!cancelled) setIsAuthenticated(true);
-      } catch (error) {
+      } catch {
         localStorage.removeItem('playerToken');
         localStorage.removeItem('playerUser');
         if (!cancelled) setIsAuthenticated(false);
@@ -34,7 +35,7 @@ const ProtectedRoute = ({ children }) => {
 
   if (isAuthenticated === null) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div className={styles.loadingWrap}>
         <Spin size="large" />
       </div>
     );

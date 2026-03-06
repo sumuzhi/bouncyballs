@@ -4,6 +4,7 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import SHA256 from 'crypto-js/sha256';
 import api from '../utils/api';
+import styles from './Login.module.less';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -30,7 +31,7 @@ const Login = () => {
 
   if (isAuthChecking) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#F9FAFC' }}>
+      <div className={styles.pageCenter}>
         <Spin size="large" />
       </div>
     );
@@ -77,19 +78,12 @@ const Login = () => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      background: '#F9FAFC'
-    }}>
+    <div className={styles.pageCenter}>
       <Card
-        className="neo-card"
-        style={{ width: 400, textAlign: 'center' }}
+        className={`${styles.authCard} neo-card`}
         bordered={false}
       >
-        <h1 style={{ marginBottom: 30, color: '#4A4A68' }}>管理员登录</h1>
+        <h1 className={styles.title}>管理员登录</h1>
         <Tabs
           centered
           defaultActiveKey="login"
@@ -112,14 +106,7 @@ const Login = () => {
                     <Input.Password prefix={<LockOutlined />} placeholder="密码" />
                   </Form.Item>
                   <Form.Item>
-                    <Button type="primary" htmlType="submit" loading={loading} block style={{
-                        background: 'linear-gradient(135deg, #9D84FF 0%, #FFB6E1 100%)',
-                        border: 'none',
-                        height: 48,
-                        borderRadius: 18,
-                        fontSize: 16,
-                        fontWeight: 700
-                    }}>
+                    <Button type="primary" htmlType="submit" loading={loading} block className={styles.submitBtn}>
                       登录
                     </Button>
                   </Form.Item>
@@ -150,14 +137,7 @@ const Login = () => {
                     <Input.Password prefix={<LockOutlined />} placeholder="密码" />
                   </Form.Item>
                   <Form.Item>
-                    <Button type="primary" htmlType="submit" loading={loading} block style={{
-                        background: 'linear-gradient(135deg, #9D84FF 0%, #FFB6E1 100%)',
-                        border: 'none',
-                        height: 48,
-                        borderRadius: 18,
-                        fontSize: 16,
-                        fontWeight: 700
-                    }}>
+                    <Button type="primary" htmlType="submit" loading={loading} block className={styles.submitBtn}>
                       注册
                     </Button>
                   </Form.Item>

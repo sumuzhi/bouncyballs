@@ -4,6 +4,7 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import SHA256 from 'crypto-js/sha256';
 import api from '../utils/api';
+import styles from './Login.module.less';
 
 const { Title } = Typography;
 
@@ -104,9 +105,9 @@ const Login = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
-      <Card style={{ width: 400, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+    <div className={styles.pageWrap}>
+      <Card className={styles.loginCard}>
+        <div className={styles.cardHeader}>
           <Title level={3}>🎮 游戏大厅</Title>
         </div>
         <Tabs defaultActiveKey="login" items={items} centered />

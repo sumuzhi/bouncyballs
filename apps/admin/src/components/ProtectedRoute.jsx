@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Spin } from 'antd';
 import api from '../utils/api';
+import styles from './ProtectedRoute.module.less';
 
 const ProtectedRoute = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // null: checking, true: valid, false: invalid
@@ -29,7 +30,7 @@ const ProtectedRoute = () => {
 
   if (isAuthenticated === null) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#F9FAFC' }}>
+      <div className={styles.loadingWrap}>
         <Spin size="large" tip="正在验证身份..." />
       </div>
     );

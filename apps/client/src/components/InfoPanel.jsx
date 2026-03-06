@@ -1,3 +1,5 @@
+import styles from './InfoPanel.module.less';
+
 export default function InfoPanel({ ball, onPlayAudio, onOpenDetail }) {
   return (
     <div
@@ -11,19 +13,20 @@ export default function InfoPanel({ ball, onPlayAudio, onOpenDetail }) {
         id="stroke-gif"
         src={ball?.stroke || ''}
         alt="笔画"
-        style={{ display: ball?.stroke ? 'block' : 'none' }}
+        className={ball?.stroke ? styles.strokeVisible : styles.strokeHidden}
       />
-      <button
-        id="play-audio-btn"
-        style={{ display: ball?.audio ? 'flex' : 'none' }}
-        title="播放读音"
-        onClick={(event) => {
-          event.stopPropagation();
-          onPlayAudio(ball?.audio);
-        }}
-      >
-        🔊
-      </button>
+      {ball?.audio ? (
+        <button
+          id="play-audio-btn"
+          title="播放读音"
+          onClick={(event) => {
+            event.stopPropagation();
+            onPlayAudio(ball?.audio);
+          }}
+        >
+          🔊
+        </button>
+      ) : null}
       <div id="info-examples">
         {(ball?.examples?.length ? ball.examples : ['暂无组词']).map((example) => (
           <span className="example-tag" key={example}>
@@ -31,7 +34,7 @@ export default function InfoPanel({ ball, onPlayAudio, onOpenDetail }) {
           </span>
         ))}
       </div>
-      <p style={{ marginTop: 15, fontSize: '0.9rem', color: '#999' }}>
+      <p className={styles.tipText}>
         点击生字查看详情
       </p>
     </div>

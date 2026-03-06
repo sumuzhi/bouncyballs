@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal } from 'antd';
+import styles from './index.module.less';
 
 const StrokeModal = ({ visible, stroke, onCancel }) => {
   return (
@@ -10,8 +11,8 @@ const StrokeModal = ({ visible, stroke, onCancel }) => {
       title="笔画演示"
       destroyOnClose
     >
-      <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}>
-        {stroke && <img src={stroke} alt="笔画" style={{ maxWidth: '100%', maxHeight: 300 }} />}
+      <div className={styles.previewWrap}>
+        {stroke && <img src={stroke} alt="笔画" className={styles.previewImage} />}
       </div>
     </Modal>
   );

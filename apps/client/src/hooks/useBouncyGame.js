@@ -23,6 +23,7 @@ export function useBouncyGame(enabled = true) {
   const mouseConstraintRef = useRef(null);
   const mouseRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const disposedRef = useRef(false);
   const resizeObserverRef = useRef(null);
   const collisionHandlerRef = useRef(null);
   const pausedMouseDownHandlerRef = useRef(null);
@@ -256,6 +257,9 @@ export function useBouncyGame(enabled = true) {
   }, []);
 
   const renderLoop = useCallback(() => {
+    if (disposedRef.current) {
+      return;
+    }
     const canvas = canvasRef.current;
     if (!canvas) {
       return;
@@ -397,7 +401,9 @@ export function useBouncyGame(enabled = true) {
       ctx.stroke();
     }
 
-    animationFrameRef.current = requestAnimationFrame(renderLoop);
+    if (!disposedRef.current) {
+      animationFrameRef.current = requestAnimationFrame(renderLoop);
+    }
   }, [getAudioData]);
 
   const togglePause = useCallback(() => {
@@ -501,6 +507,7 @@ export function useBouncyGame(enabled = true) {
     }
 
     let disposed = false;
+    disposedRef.current = false;
 
     const bootstrap = async () => {
       const canvas = canvasRef.current;
@@ -553,11 +560,14 @@ export function useBouncyGame(enabled = true) {
 
     return () => {
       disposed = true;
+      disposedRef.current = true;
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
       }
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
       }
       if (mouseConstraintRef.current && engineRef.current) {
         Composite.remove(engineRef.current.world, mouseConstraintRef.current);
@@ -570,14 +580,22 @@ export function useBouncyGame(enabled = true) {
       }
       if (runnerRef.current) {
         Runner.stop(runnerRef.current);
+        runnerRef.current = null;
       }
       if (engineRef.current) {
         Engine.clear(engineRef.current);
+        engineRef.current = null;
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
       }
       audioContextRef.current?.close?.();
+      audioContextRef.current = null;
+      analyserRef.current = null;
+      dataArrayRef.current = null;
+      isAudioActiveRef.current = false;
+      currentNormalizedVolRef.current = 0;
     };
   }, [addMouseControl, applyCollisionForce, createBalls, createWalls, enabled, handleResize, renderLoop, resize, updateBallCountDisplay]);
 

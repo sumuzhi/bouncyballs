@@ -1,6 +1,7 @@
 import React from 'react';
 import { List, Card, Button, Tooltip } from 'antd';
 import { EditOutlined, DeleteOutlined, SoundOutlined, EyeOutlined } from '@ant-design/icons';
+import styles from './CardView.module.less';
 
 const CardView = ({ data, loading, onEdit, onDelete, onPlayAudio, onPreviewStroke, playingId }) => {
   return (
@@ -9,7 +10,7 @@ const CardView = ({ data, loading, onEdit, onDelete, onPlayAudio, onPreviewStrok
       grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 4, xxl: 6 }}
       dataSource={data}
       renderItem={(item) => (
-        <List.Item style={{ marginBottom: 16 }}>
+        <List.Item className={styles.listItem}>
           <Card
             hoverable
             actions={[
@@ -19,19 +20,19 @@ const CardView = ({ data, loading, onEdit, onDelete, onPlayAudio, onPreviewStrok
           >
             <Card.Meta
               title={
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 24, fontWeight: 700, color: '#4A4A68' }}>{item.char}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#9D84FF', background: '#F0EDFF', padding: '2px 8px', borderRadius: 10 }}>
+                <div className={styles.metaTitle}>
+                  <span className={styles.char}>{item.char}</span>
+                  <span className={styles.pinyinTag}>
                     {item.pinyin}
                   </span>
                 </div>
               }
               description={
-                <div style={{ marginTop: 10 }}>
-                   <div style={{ color: '#9FA0C3', marginBottom: 8, height: 40, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.examples.join(', ')}</div>
-                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                      {item.audio && <Tooltip title="播放读音"><Button size="small" type="text" icon={<SoundOutlined className={playingId === item._id ? 'playing-icon' : ''} />} style={{ color: '#9D84FF' }} onClick={() => onPlayAudio(item.audio, item._id)} /></Tooltip>}
-                      {item.stroke && <Tooltip title="查看笔画"><Button size="small" type="text" icon={<EyeOutlined />} style={{ color: '#FFB6E1' }} onClick={() => onPreviewStroke(item.stroke)} /></Tooltip>}
+                <div className={styles.metaDescription}>
+                   <div className={styles.examples}>{item.examples.join(', ')}</div>
+                   <div className={styles.actionRow}>
+                      {item.audio && <Tooltip title="播放读音"><Button size="small" type="text" icon={<SoundOutlined className={playingId === item._id ? 'playing-icon' : ''} />} className={styles.audioBtn} onClick={() => onPlayAudio(item.audio, item._id)} /></Tooltip>}
+                      {item.stroke && <Tooltip title="查看笔画"><Button size="small" type="text" icon={<EyeOutlined />} className={styles.strokeBtn} onClick={() => onPreviewStroke(item.stroke)} /></Tooltip>}
                    </div>
                 </div>
               }

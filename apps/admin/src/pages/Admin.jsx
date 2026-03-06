@@ -7,6 +7,7 @@ import useAudioPlayer from '../hooks/useAudioPlayer';
 import CharacterList from '../components/admin/CharacterList';
 import CharacterModal from '../components/admin/CharacterModal';
 import StrokeModal from '../components/admin/StrokeModal';
+import styles from './Admin.module.less';
 
 const { Header, Content } = Layout;
 const { Title } = Typography;
@@ -60,24 +61,24 @@ const Admin = () => {
   }, [editingItem, fetchData, pagination.current, handleModalClose]);
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#F9FAFC' }}>
-      <Header style={{ background: '#fff', padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-        <Title level={3} style={{ margin: 0, color: '#4A4A68' }}>汉字录入 ✨</Title>
-        <div style={{ display: 'flex', gap: 10 }}>
+    <Layout className={styles.layout}>
+      <Header className={styles.header}>
+        <Title level={3} className={styles.title}>汉字录入 ✨</Title>
+        <div className={styles.headerActions}>
             <Button 
                 type="primary" 
                 icon={<RobotOutlined />} 
                 onClick={handleAdd}
-                style={{ background: 'linear-gradient(135deg, #9D84FF 0%, #FFB6E1 100%)', border: 'none', fontWeight: 700 }}
+                className={styles.primaryAction}
             >
                 添加汉字
             </Button>
             <Button icon={<LogoutOutlined />} onClick={handleLogout}>退出登录</Button>
         </div>
       </Header>
-      <Content style={{ padding: '20px', maxWidth: 900, margin: '0 auto', width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 className="list-header" style={{ margin: 0 }}>已录入汉字</h2>
+      <Content className={styles.content}>
+        <div className={styles.listHeaderRow}>
+          <h2 className="list-header">已录入汉字</h2>
           <Radio.Group value={viewMode} onChange={(e) => setViewMode(e.target.value)} buttonStyle="solid">
             <Radio.Button value="list"><BarsOutlined /></Radio.Button>
             <Radio.Button value="card"><AppstoreOutlined /></Radio.Button>
@@ -96,7 +97,7 @@ const Admin = () => {
         />
 
         {pagination.total > 0 && (
-            <div style={{ padding: '20px', display: 'flex', justifyContent: 'center' }}>
+            <div className={styles.paginationWrap}>
                 <Pagination
                 current={pagination.current}
                 total={pagination.total}

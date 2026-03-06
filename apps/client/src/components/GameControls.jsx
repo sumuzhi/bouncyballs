@@ -1,3 +1,5 @@
+import styles from './GameControls.module.less';
+
 export default function GameControls({
   isAudioActive,
   isPaused,
@@ -22,16 +24,7 @@ export default function GameControls({
         id="pause-btn"
         onClick={onPause}
         disabled={!isAudioActive}
-        style={
-          isAudioActive
-            ? {
-                background: isPaused
-                  ? 'linear-gradient(45deg, #4caf50, #81c784)'
-                  : 'linear-gradient(45deg, #ff6f00, #ffca28)',
-                boxShadow: isPaused ? '0 4px 0 #388e3c' : '0 4px 0 #e65100',
-              }
-            : undefined
-        }
+        className={isAudioActive ? (isPaused ? styles.pauseContinue : styles.pauseActive) : undefined}
       >
         {isPaused ? '继续' : '暂停'}
       </button>
@@ -65,14 +58,14 @@ export default function GameControls({
           onChange={(event) => onBallCountChange(Number(event.target.value))}
           title="调整显示生字的百分比"
         />
-        <span id="ball-count-display" style={{ fontSize: 14, minWidth: 80 }}>
+        <span id="ball-count-display" className={styles.ballCountDisplay}>
           {ballCountDisplay}
         </span>
       </div>
       <div className="status-indicator">
         <span>声音大小:</span>
         <div id="volume-meter">
-          <div id="volume-bar" style={{ width: `${volumePercent}%` }} />
+          <progress id="volume-bar" className={styles.volumeBar} max="100" value={volumePercent} />
         </div>
       </div>
     </div>
