@@ -1,3 +1,59 @@
+.controls {
+  pointer-events: auto;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  align-self: center;
+  backdrop-filter: none;
+  border: none;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  width: 90%;
+  max-width: 1200px;
+  z-index: 200000;
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.actionButton {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(251, 140, 0, 0.3);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  letter-spacing: 1px;
+  min-width: 80px;
+}
+
+.actionButton:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 6px 15px rgba(251, 140, 0, 0.4);
+}
+
+.actionButton:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 5px rgba(251, 140, 0, 0.3);
+}
+
+.actionButton:disabled {
+  background: #e0e0e0;
+  color: #9e9e9e;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .pauseActive {
   background: linear-gradient(45deg, #ff6f00, #ffca28) !important;
   box-shadow: 0 4px 0 #e65100 !important;
@@ -8,9 +64,75 @@
   box-shadow: 0 4px 0 #388e3c !important;
 }
 
+.controlGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1b5e20;
+  font-weight: bold;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 6px 12px;
+  border-radius: 15px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.rangeInput {
+  -webkit-appearance: none;
+  width: 100px;
+  height: 5px;
+  background: #b3e5fc;
+  border-radius: 5px;
+  outline: none;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.rangeInput:hover {
+  opacity: 1;
+}
+
+.rangeInput::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #039be5;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.1s;
+}
+
+.rangeInput::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
 .ballCountDisplay {
   font-size: 14px;
   min-width: 80px;
+}
+
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #1b5e20;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 6px 12px;
+  border-radius: 15px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.volumeMeter {
+  width: 80px;
+  height: 8px;
+  background: #cfd8dc;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .volumeBar {

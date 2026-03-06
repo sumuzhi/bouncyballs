@@ -3,21 +3,19 @@ import styles from './InfoPanel.module.less';
 export default function InfoPanel({ ball, onPlayAudio, onOpenDetail }) {
   return (
     <div
-      id="info-panel"
-      className={ball ? 'visible' : ''}
+      className={ball ? `${styles.infoPanel} ${styles.visible}` : styles.infoPanel}
       onClick={ball ? onOpenDetail : undefined}
     >
-      <h2 id="info-char">{ball?.char || '汉'}</h2>
-      <p id="info-pinyin">{ball?.pinyin || 'hàn'}</p>
+      <h2 className={styles.infoChar}>{ball?.char || '汉'}</h2>
+      <p className={styles.infoPinyin}>{ball?.pinyin || 'hàn'}</p>
       <img
-        id="stroke-gif"
+        className={ball?.stroke ? `${styles.strokeGif} ${styles.strokeVisible}` : `${styles.strokeGif} ${styles.strokeHidden}`}
         src={ball?.stroke || ''}
         alt="笔画"
-        className={ball?.stroke ? styles.strokeVisible : styles.strokeHidden}
       />
       {ball?.audio ? (
         <button
-          id="play-audio-btn"
+          className={styles.playAudioBtn}
           title="播放读音"
           onClick={(event) => {
             event.stopPropagation();
@@ -27,9 +25,9 @@ export default function InfoPanel({ ball, onPlayAudio, onOpenDetail }) {
           🔊
         </button>
       ) : null}
-      <div id="info-examples">
+      <div className={styles.infoExamples}>
         {(ball?.examples?.length ? ball.examples : ['暂无组词']).map((example) => (
-          <span className="example-tag" key={example}>
+          <span className={styles.exampleTag} key={example}>
             {example}
           </span>
         ))}

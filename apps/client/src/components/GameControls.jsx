@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import styles from './GameControls.module.less';
 
 export default function GameControls({
@@ -15,30 +16,33 @@ export default function GameControls({
   ballCountDisplay,
   volumePercent,
 }) {
+  const sensitivityId = useId();
+  const ballCountId = useId();
+
   return (
-    <div id="controls">
-      <button id="start-btn" onClick={onStart} disabled={isAudioActive}>
+    <div className={styles.controls}>
+      <button className={styles.actionButton} onClick={onStart} disabled={isAudioActive}>
         {isAudioActive ? '麦克风监听中...' : '开始游戏'}
       </button>
       <button
-        id="pause-btn"
+        className={`${styles.actionButton} ${isAudioActive ? (isPaused ? styles.pauseContinue : styles.pauseActive) : ''}`}
         onClick={onPause}
         disabled={!isAudioActive}
-        className={isAudioActive ? (isPaused ? styles.pauseContinue : styles.pauseActive) : undefined}
       >
         {isPaused ? '继续' : '暂停'}
       </button>
-      <button id="refresh-btn" onClick={onRefresh}>
+      <button className={styles.actionButton} onClick={onRefresh}>
         换一批
       </button>
-      <button id="fullscreen-btn" onClick={onFullscreen}>
+      <button className={styles.actionButton} onClick={onFullscreen}>
         {fullscreenText}
       </button>
-      <div className="control-group">
-        <label htmlFor="sensitivity">灵敏度:</label>
+      <div className={styles.controlGroup}>
+        <label htmlFor={sensitivityId}>灵敏度:</label>
         <input
           type="range"
-          id="sensitivity"
+          className={styles.rangeInput}
+          id={sensitivityId}
           min="0.5"
           max="3.0"
           step="0.1"
@@ -46,11 +50,12 @@ export default function GameControls({
           onChange={(event) => onSensitivityChange(Number(event.target.value))}
         />
       </div>
-      <div className="control-group">
-        <label htmlFor="ball-count-percent">生字量:</label>
+      <div className={styles.controlGroup}>
+        <label htmlFor={ballCountId}>生字量:</label>
         <input
           type="range"
-          id="ball-count-percent"
+          className={styles.rangeInput}
+          id={ballCountId}
           min="1"
           max="100"
           step="1"
@@ -58,14 +63,14 @@ export default function GameControls({
           onChange={(event) => onBallCountChange(Number(event.target.value))}
           title="调整显示生字的百分比"
         />
-        <span id="ball-count-display" className={styles.ballCountDisplay}>
+        <span className={styles.ballCountDisplay}>
           {ballCountDisplay}
         </span>
       </div>
-      <div className="status-indicator">
+      <div className={styles.statusIndicator}>
         <span>声音大小:</span>
-        <div id="volume-meter">
-          <progress id="volume-bar" className={styles.volumeBar} max="100" value={volumePercent} />
+        <div className={styles.volumeMeter}>
+          <progress className={styles.volumeBar} max="100" value={volumePercent} />
         </div>
       </div>
     </div>

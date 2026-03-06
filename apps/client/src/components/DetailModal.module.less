@@ -1,0 +1,150 @@
+.detailModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 60000;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease;
+}
+
+.detailCard {
+  background: white;
+  width: 800px;
+  max-width: 90%;
+  height: 500px;
+  border-radius: 30px;
+  display: flex;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.closeDetailButton {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.closeDetailButton:hover {
+  background: #ff5252;
+  color: white;
+  transform: rotate(90deg);
+}
+
+.detailLeft {
+  flex: 1;
+  padding: 40px;
+  background: #f8fbfe;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 1px solid #eee;
+}
+
+.detailRight {
+  flex: 1;
+  padding: 40px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.detailPinyin {
+  font-size: 3rem;
+  color: #555;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  margin-bottom: 10px;
+}
+
+.detailChar {
+  font-size: 10rem;
+  color: #ff6f00;
+  text-align: center;
+  font-family: 'KaiTi', 'STKaiti', '楷体', serif;
+  line-height: 1;
+  margin: 0;
+  text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.detailExamples {
+  margin-top: 40px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+
+.detailExampleTag {
+  background: #e3f2fd;
+  color: #0277bd;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.detailStrokeGif {
+  width: 300px;
+  height: 300px;
+  object-fit: contain;
+  border-radius: 20px;
+  border: 2px solid #eee;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.detailAudioButton {
+  margin-top: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);
+  color: white;
+  font-size: 28px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detailAudioButton:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 25px rgba(33, 150, 243, 0.5);
+}
+
+.detailAudioButton:active {
+  transform: scale(0.95);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

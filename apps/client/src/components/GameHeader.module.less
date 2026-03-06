@@ -1,0 +1,49 @@
+.header {
+  text-align: center;
+  color: #01579b;
+  pointer-events: auto;
+  margin-top: 30px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(5px);
+  padding: 20px 50px;
+  border-radius: 30px;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  animation: float 6s ease-in-out infinite;
+  align-self: center;
+}
+
+.title {
+  margin: 0;
+  font-family: 'Ma Shan Zheng', cursive;
+  font-size: 4rem;
+  text-shadow:
+    3px 3px 0 #fff,
+    5px 5px 10px rgba(0, 0, 0, 0.1);
+  letter-spacing: 5px;
+}
+
+.subtitle {
+  margin: 10px 0 0;
+  font-size: 1.3rem;
+  color: #fff;
+  background: #29b6f6;
+  display: inline-block;
+  padding: 5px 20px;
+  border-radius: 50px;
+  box-shadow: 0 4px 10px rgba(41, 182, 246, 0.3);
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}

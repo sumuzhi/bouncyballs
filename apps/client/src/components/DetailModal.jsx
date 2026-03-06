@@ -1,31 +1,33 @@
+import styles from './DetailModal.module.less';
+
 export default function DetailModal({ ball, visible, onClose, onPlayAudio }) {
   if (!visible || !ball) {
     return null;
   }
 
   return (
-    <div id="detail-modal" className="visible" onClick={onClose}>
-      <div className="detail-card" onClick={(event) => event.stopPropagation()}>
-        <button className="close-detail-btn" onClick={onClose}>
+    <div className={styles.detailModal} onClick={onClose}>
+      <div className={styles.detailCard} onClick={(event) => event.stopPropagation()}>
+        <button className={styles.closeDetailButton} onClick={onClose}>
           ×
         </button>
-        <div className="detail-left">
-          <div className="detail-pinyin">{ball.pinyin}</div>
-          <h1 className="detail-char">{ball.char}</h1>
-          <div className="detail-examples">
+        <div className={styles.detailLeft}>
+          <div className={styles.detailPinyin}>{ball.pinyin}</div>
+          <h1 className={styles.detailChar}>{ball.char}</h1>
+          <div className={styles.detailExamples}>
             {(ball.examples?.length ? ball.examples : ['暂无组词']).map((example) => (
-              <span className="detail-example-tag" key={example}>
+              <span className={styles.detailExampleTag} key={example}>
                 {example}
               </span>
             ))}
           </div>
         </div>
-        <div className="detail-right">
+        <div className={styles.detailRight}>
           {ball.stroke ? (
-            <img className="detail-stroke-gif" src={ball.stroke} alt="笔画" />
+            <img className={styles.detailStrokeGif} src={ball.stroke} alt="笔画" />
           ) : null}
           {ball.audio ? (
-            <button className="detail-audio-btn" onClick={() => onPlayAudio(ball.audio)}>
+            <button className={styles.detailAudioButton} onClick={() => onPlayAudio(ball.audio)}>
               🔊
             </button>
           ) : null}

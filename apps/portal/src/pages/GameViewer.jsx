@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Button, Tooltip } from 'antd';
-import { HomeOutlined, ReloadOutlined, FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
+import {
+  HomeOutlined,
+  ReloadOutlined,
+  FullscreenOutlined,
+  FullscreenExitOutlined,
+} from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import WujieReact from 'wujie-react';
 import styles from './GameViewer.module.less';
@@ -16,16 +21,33 @@ const GameViewer = () => {
 
   // Map gameId to url
   const gameMap = {
-    'bouncy-balls': bouncyBallsUrl
+    'bouncy-balls': bouncyBallsUrl,
   };
 
   const gameUrl = gameMap[gameId];
+  const handleCloseLoading = useCallback(() => {
+    setLoading(false);
+  }, []);
+  const wujieProps = useMemo(
+    () => ({
+      token: localStorage.getItem('playerToken'),
+      user: JSON.parse(localStorage.getItem('playerUser') || '{}'),
+      closeLoading: handleCloseLoading,
+    }),
+    [handleCloseLoading],
+  );
 
   if (!gameUrl) {
     return (
       <div className={styles.notFound}>
         游戏不存在
-        <Button type="primary" onClick={() => navigate('/')} className={styles.backButton}>返回大厅</Button>
+        <Button
+          type='primary'
+          onClick={() => navigate('/')}
+          className={styles.backButton}
+        >
+          返回大厅
+        </Button>
       </div>
     );
   }
@@ -45,38 +67,44 @@ const GameViewer = () => {
   return (
     <div className={styles.page}>
       <div className={`glass-panel ${styles.floatNav}`}>
-        <Tooltip title="返回大厅">
-          <Button 
-            type="text" 
-            shape="circle" 
-            icon={<HomeOutlined className={styles.navIcon} />} 
-            onClick={() => navigate('/')} 
+        <Tooltip title='返回大厅'>
+          <Button
+            type='text'
+            shape='circle'
+            icon={<HomeOutlined className={styles.navIcon} />}
+            onClick={() => navigate('/')}
           />
         </Tooltip>
-        
+
         <div className={styles.divider} />
-        
+
         <span className={styles.gameName}>
           {gameId === 'bouncy-balls' ? '生字跳跳乐' : gameId}
         </span>
 
         <div className={styles.divider} />
 
-        <Tooltip title="刷新游戏">
-          <Button 
-            type="text" 
-            shape="circle" 
-            icon={<ReloadOutlined className={styles.navIcon} />} 
-            onClick={() => window.location.reload()} 
+        <Tooltip title='刷新游戏'>
+          <Button
+            type='text'
+            shape='circle'
+            icon={<ReloadOutlined className={styles.navIcon} />}
+            onClick={() => window.location.reload()}
           />
         </Tooltip>
 
-        <Tooltip title={isFullscreen ? "退出全屏" : "全屏模式"}>
-           <Button 
-            type="text" 
-            shape="circle" 
-            icon={isFullscreen ? <FullscreenExitOutlined className={styles.navIcon} /> : <FullscreenOutlined className={styles.navIcon} />} 
-            onClick={toggleFullscreen} 
+        <Tooltip title={isFullscreen ? '退出全屏' : '全屏模式'}>
+          <Button
+            type='text'
+            shape='circle'
+            icon={
+              isFullscreen ? (
+                <FullscreenExitOutlined className={styles.navIcon} />
+              ) : (
+                <FullscreenOutlined className={styles.navIcon} />
+              )
+            }
+            onClick={toggleFullscreen}
           />
         </Tooltip>
       </div>
@@ -91,28 +119,32 @@ const GameViewer = () => {
               <div className={`${styles.dot} ${styles.dotOrange}`} />
             </div>
 
-            <div className={styles.loadingText}>
-              Loading...
-            </div>
+            <div className={styles.loadingText}>Loading...</div>
           </div>
         </div>
       )}
 
       <div className={styles.gameContainer}>
         <WujieReact
-          width="100%"
-          height="100%"
+          width='100%'
+          height='100%'
           name={gameId}
           url={gameUrl}
           sync={true}
           alive={false}
           fetch={window.fetch}
-          props={{
-            token: localStorage.getItem('playerToken'),
-            user: JSON.parse(localStorage.getItem('playerUser') || '{}'),
-            closeLoading: () => setLoading(false),
-          }}
- 
+          props={wujieProps}
+          plugins={[
+            {
+              patchElementHook(element, iframeWindow) {
+                if (element.nodeName === 'STYLE') {
+                  element.insertAdjacentElement = function (_position, ele) {
+                    iframeWindow.document.head.appendChild(ele);
+                  };
+                }
+              },
+            },
+          ]}
         />
       </div>
     </div>

@@ -2,9 +2,11 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 
 let root = null;
+let mounted = false;
 
 function renderApp() {
   const container = document.getElementById('root');
+  console.log("🚀 ~ renderApp ~ container:", container)
   if (!container) {
     return;
   }
@@ -15,7 +17,12 @@ function renderApp() {
 }
 
 function mount() {
+  if (mounted) {
+    window.$wujie?.props?.closeLoading?.();
+    return;
+  }
   renderApp();
+  mounted = true;
   window.$wujie?.props?.closeLoading?.();
 }
 
@@ -24,6 +31,7 @@ function unmount() {
     root.unmount();
     root = null;
   }
+  mounted = false;
 }
 
 if (window.__POWERED_BY_WUJIE__) {

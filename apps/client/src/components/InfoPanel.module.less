@@ -1,9 +1,98 @@
+.infoPanel {
+  position: absolute;
+  top: 120px;
+  right: 30px;
+  width: 220px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  pointer-events: auto;
+  transform: translateX(120%);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 50;
+}
+
+.visible {
+  transform: translateX(0);
+}
+
+.infoChar {
+  font-size: 4rem;
+  margin: 0;
+  color: #ff6f00;
+  font-family: 'KaiTi', 'STKaiti', 'BiauKai', '楷体', '楷体_GB2312', serif;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.infoPinyin {
+  font-size: 1.5rem;
+  color: #555;
+  margin: 10px 0;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+}
+
+.strokeGif {
+  width: 100px;
+  height: 100px;
+  margin: 10px auto;
+  border-radius: 8px;
+  display: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
 .strokeVisible {
   display: block !important;
 }
 
 .strokeHidden {
   display: none !important;
+}
+
+.playAudioBtn {
+  background: linear-gradient(135deg, #9d84ff 0%, #7e57c2 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(126, 87, 194, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px auto;
+  transition: transform 0.2s;
+}
+
+.playAudioBtn:hover {
+  transform: scale(1.1);
+}
+
+.playAudioBtn:active {
+  transform: scale(0.95);
+}
+
+.infoExamples {
+  margin-top: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.exampleTag {
+  background: #e1f5fe;
+  color: #0277bd;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 1rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .tipText {

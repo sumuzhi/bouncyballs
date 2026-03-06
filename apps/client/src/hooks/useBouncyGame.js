@@ -24,7 +24,7 @@ export function useBouncyGame(enabled = true) {
   const mouseRef = useRef(null);
   const animationFrameRef = useRef(null);
   const disposedRef = useRef(false);
-  const resizeObserverRef = useRef(null);
+  const bootstrappedRef = useRef(false);
   const collisionHandlerRef = useRef(null);
   const pausedMouseDownHandlerRef = useRef(null);
   const widthRef = useRef(0);
@@ -32,6 +32,8 @@ export function useBouncyGame(enabled = true) {
   const vocabularyRef = useRef([]);
   const isAudioActiveRef = useRef(false);
   const currentNormalizedVolRef = useRef(0);
+  const displayedVolumePercentRef = useRef(0);
+  const lastVolumeUpdateAtRef = useRef(0);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
   const dataArrayRef = useRef(null);
@@ -61,20 +63,26 @@ export function useBouncyGame(enabled = true) {
   const resize = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) {
-      return;
+      return false;
     }
-    const width =
-      document.documentElement.clientWidth ||
-      document.body.clientWidth ||
-      window.innerWidth;
-    const height =
-      document.documentElement.clientHeight ||
-      document.body.clientHeight ||
-      window.innerHeight;
+    const viewportWidth =
+      window.visualViewport?.width ||
+      window.innerWidth ||
+      document.documentElement.clientWidth;
+    const viewportHeight =
+      window.visualViewport?.height ||
+      window.innerHeight ||
+      document.documentElement.clientHeight;
+    const width = Math.max(1, Math.round(viewportWidth));
+    const height = Math.max(1, Math.round(viewportHeight));
+    if (width === widthRef.current && height === heightRef.current) {
+      return false;
+    }
     widthRef.current = width;
     heightRef.current = height;
     canvas.width = width;
     canvas.height = height;
+    return true;
   }, []);
 
   const createWalls = useCallback(() => {
@@ -222,7 +230,10 @@ export function useBouncyGame(enabled = true) {
     if (!engine) {
       return;
     }
-    resize();
+    const resized = resize();
+    if (!resized) {
+      return;
+    }
     Composite.remove(engine.world, wallsRef.current);
     createWalls();
     ballsRef.current.forEach((ballObj) => {
@@ -275,7 +286,13 @@ export function useBouncyGame(enabled = true) {
       normalizedVol = Math.min((volume / 255) * sensitivityRef.current, 3.0);
       currentNormalizedVolRef.current = normalizedVol;
       const volPercent = Math.min(normalizedVol * 100, 100);
-      setVolumePercent(volPercent);
+      const now = Date.now();
+      const delta = Math.abs(volPercent - displayedVolumePercentRef.current);
+      if (delta >= 2 || now - lastVolumeUpdateAtRef.current >= 120) {
+        displayedVolumePercentRef.current = volPercent;
+        lastVolumeUpdateAtRef.current = now;
+        setVolumePercent(volPercent);
+      }
 
       if (!isPausedRef.current && normalizedVol > 0.1) {
         ballsRef.current.forEach((ballObj) => {
@@ -508,10 +525,16 @@ export function useBouncyGame(enabled = true) {
 
     let disposed = false;
     disposedRef.current = false;
+    bootstrappedRef.current = false;
 
     const bootstrap = async () => {
+      if (bootstrappedRef.current || disposedRef.current) {
+        return;
+      }
+      bootstrappedRef.current = true;
       const canvas = canvasRef.current;
       if (!canvas) {
+        bootstrappedRef.current = false;
         return;
       }
 
@@ -522,6 +545,7 @@ export function useBouncyGame(enabled = true) {
 
       const characters = await fetchCharacters(1000).catch(() => []);
       if (disposed) {
+        bootstrappedRef.current = false;
         return;
       }
       vocabularyRef.current = characters;
@@ -550,10 +574,7 @@ export function useBouncyGame(enabled = true) {
 
       animationFrameRef.current = requestAnimationFrame(renderLoop);
 
-      resizeObserverRef.current = new ResizeObserver(() => {
-        handleResize();
-      });
-      resizeObserverRef.current.observe(document.documentElement);
+      window.addEventListener('resize', handleResize);
     };
 
     bootstrap();
@@ -561,14 +582,12 @@ export function useBouncyGame(enabled = true) {
     return () => {
       disposed = true;
       disposedRef.current = true;
+      bootstrappedRef.current = false;
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
       }
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-        resizeObserverRef.current = null;
-      }
+      window.removeEventListener('resize', handleResize);
       if (mouseConstraintRef.current && engineRef.current) {
         Composite.remove(engineRef.current.world, mouseConstraintRef.current);
       }
@@ -596,6 +615,8 @@ export function useBouncyGame(enabled = true) {
       dataArrayRef.current = null;
       isAudioActiveRef.current = false;
       currentNormalizedVolRef.current = 0;
+      displayedVolumePercentRef.current = 0;
+      lastVolumeUpdateAtRef.current = 0;
     };
   }, [addMouseControl, applyCollisionForce, createBalls, createWalls, enabled, handleResize, renderLoop, resize, updateBallCountDisplay]);
 
