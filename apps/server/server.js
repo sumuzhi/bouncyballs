@@ -14,13 +14,11 @@ require('dotenv').config({ path: path.join(__dirname, envFile), override: true }
 
 
 const Character = require('./models/Character');
-const authRoutes = require('./routes/auth');
+const { createAuthRouter } = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'password';
 const CORS_ORIGINS = process.env.CORS_ORIGINS || '';
 const normalizeOrigin = (value) => value.replace(/\/+$/, '').trim();
 const allowedOrigins = CORS_ORIGINS.split(',')
@@ -64,6 +62,20 @@ const authenticateToken = (req, res, next) => {
     req.user = user;
     next();
   });
+};
+
+const authorizeApps = (apps) => (req, res, next) => {
+  if (!req.user?.app || !apps.includes(req.user.app)) {
+    return res.status(403).json({ message: 'Forbidden' });
+  }
+  return next();
+};
+
+const validateCharacterId = (req, res, next) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: 'Invalid character id' });
+  }
+  return next();
 };
 
 // Database Connection
@@ -163,28 +175,12 @@ async function fetchCharDetails(char) {
 // API Routes
 
 // Auth Routes
-app.use('/api/auth', authRoutes);
-
-// Verify Token Route
-app.get('/api/verify', authenticateToken, (req, res) => {
-  res.json({ valid: true, user: req.user });
-});
-
-// Login Route
-app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
-
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    const user = { name: username };
-    const accessToken = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' }); // Token valid for 24 hours
-    res.json({ accessToken });
-  } else {
-    res.status(401).json({ message: 'Invalid credentials' });
-  }
-});
+app.use('/api/portal/auth', createAuthRouter('portal'));
+app.use('/api/admin/auth', createAuthRouter('admin'));
+app.use('/api/auth', createAuthRouter('portal'));
 
 // Generate Pinyin and Examples using AI (Protected)
-app.get('/api/ai-generate', authenticateToken, async (req, res) => {
+app.get('/api/ai-generate', authenticateToken, authorizeApps(['admin']), async (req, res) => {
   const char = req.query.char;
   if (!char) {
     return res.status(400).json({ message: 'Character is required' });
@@ -199,7 +195,7 @@ app.get('/api/ai-generate', authenticateToken, async (req, res) => {
 });
 
 // Get all characters (with pagination)
-app.get('/api/characters', async (req, res) => {
+app.get('/api/characters', authenticateToken, authorizeApps(['portal', 'admin']), async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20; // Default 20 per page
@@ -227,7 +223,7 @@ app.get('/api/characters', async (req, res) => {
 });
 
 // Add a new character (Protected)
-app.post('/api/characters', authenticateToken, async (req, res) => {
+app.post('/api/characters', authenticateToken, authorizeApps(['admin']), async (req, res) => {
   let { char, pinyin, examples, audio, stroke } = req.body;
   
   if (!char) {
@@ -276,7 +272,7 @@ app.post('/api/characters', authenticateToken, async (req, res) => {
 });
 
 // Update a character (Protected)
-app.put('/api/characters/:id', authenticateToken, async (req, res) => {
+app.put('/api/characters/:id', authenticateToken, authorizeApps(['admin']), validateCharacterId, async (req, res) => {
   try {
     const { pinyin, examples, audio, stroke } = req.body;
     
@@ -298,7 +294,7 @@ app.put('/api/characters/:id', authenticateToken, async (req, res) => {
 });
 
 // Delete a character (Protected)
-app.delete('/api/characters/:id', authenticateToken, async (req, res) => {
+app.delete('/api/characters/:id', authenticateToken, authorizeApps(['admin']), validateCharacterId, async (req, res) => {
   try {
     const char = await Character.findById(req.params.id);
     if (!char) return res.status(404).json({ message: 'Character not found' });

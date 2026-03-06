@@ -15,7 +15,7 @@ const Login = () => {
     setLoading(true);
     try {
       const hashedPassword = SHA256(values.password).toString();
-      const res = await api.post('/auth/login', {
+      const res = await api.post('/portal/auth/login', {
         ...values,
         password: hashedPassword
       });
@@ -34,7 +34,7 @@ const Login = () => {
     setLoading(true);
     try {
       const hashedPassword = SHA256(values.password).toString();
-      const res = await api.post('/auth/register', {
+      const res = await api.post('/portal/auth/register', {
         ...values,
         password: hashedPassword
       });

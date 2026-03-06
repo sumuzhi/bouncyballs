@@ -16,7 +16,7 @@ const ProtectedRoute = () => {
       }
 
       try {
-        await api.get('/verify');
+        await api.get('/admin/auth/verify');
         setIsAuthenticated(true);
       } catch (error) {
         localStorage.removeItem('adminToken');

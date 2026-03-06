@@ -20,6 +20,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('playerToken');
+      localStorage.removeItem('playerUser');
       window.location.href = '/login';
     }
     return Promise.reject(error);
