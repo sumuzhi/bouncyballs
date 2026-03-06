@@ -14,17 +14,33 @@ require('dotenv').config({ path: path.join(__dirname, envFile), override: true }
 
 
 const Character = require('./models/Character');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'password';
+const CORS_ORIGINS = process.env.CORS_ORIGINS || '';
+const allowedOrigins = CORS_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean);
 // 增加请求体大小限制
 app.use(express.json({ limit: '10mb' })); // 10MB
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (!allowedOrigins.length || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  }),
+);
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
@@ -137,6 +153,9 @@ async function fetchCharDetails(char) {
 }
 
 // API Routes
+
+// Auth Routes
+app.use('/api/auth', authRoutes);
 
 // Verify Token Route
 app.get('/api/verify', authenticateToken, (req, res) => {

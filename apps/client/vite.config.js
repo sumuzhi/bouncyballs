@@ -1,14 +1,23 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react';
 
-export default defineConfig({
-  base: './', // 相对路径，确保在根目录或子目录下都能加载
-  server: {
-    port: 3001,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3000',
-        changeOrigin: true
-      }
-    }
-  }
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  return {
+    plugins: [react()],
+    base: env.VITE_PUBLIC_BASE || (mode === 'production' ? '/bouncy-balls/' : '/'),
+    server: {
+      port: 3001,
+      cors: true,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+      proxy: {
+        '/api': {
+          target: env.VITE_API_PROXY_TARGET || 'http://localhost:3000',
+          changeOrigin: true,
+        },
+      },
+    },
+  };
 });

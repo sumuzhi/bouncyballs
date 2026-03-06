@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, message, Spin } from 'antd';
+import { Form, Input, Card, message, Spin, Button } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import SHA256 from 'crypto-js/sha256';
 import api from '../utils/api';
 
 const Login = () => {
@@ -39,7 +40,11 @@ const Login = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const response = await axios.post('/api/login', values);
+      const hashedPassword = SHA256(values.password).toString();
+      const response = await axios.post('/api/login', {
+        ...values,
+        password: hashedPassword
+      });
       const { accessToken } = response.data;
       localStorage.setItem('adminToken', accessToken);
       message.success('登录成功');
