@@ -22,7 +22,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'password';
 const CORS_ORIGINS = process.env.CORS_ORIGINS || '';
-const allowedOrigins = CORS_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean);
+const normalizeOrigin = (value) => value.replace(/\/+$/, '').trim();
+const allowedOrigins = CORS_ORIGINS.split(',')
+  .map((origin) => normalizeOrigin(origin))
+  .filter(Boolean);
 // 增加请求体大小限制
 app.use(express.json({ limit: '10mb' })); // 10MB
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -33,7 +36,12 @@ app.use(
       if (!origin) {
         return callback(null, true);
       }
-      if (!allowedOrigins.length || allowedOrigins.includes(origin)) {
+      const normalizedOrigin = normalizeOrigin(origin);
+      if (
+        !allowedOrigins.length ||
+        allowedOrigins.includes('*') ||
+        allowedOrigins.includes(normalizedOrigin)
+      ) {
         return callback(null, true);
       }
       return callback(new Error('Not allowed by CORS'));

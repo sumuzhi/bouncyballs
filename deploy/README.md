@@ -64,6 +64,14 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
+宝塔面板可直接使用：
+
+```bash
+cp /www/wwwroot/bouncyballs/deploy/nginx.btpanel.sumuzhi.site.conf /www/server/panel/vhost/nginx/sumuzhi.site.conf
+nginx -t
+systemctl reload nginx
+```
+
 ## 6. 生产环境变量
 
 `apps/server/.env.production` 至少需要：
@@ -95,3 +103,14 @@ sudo systemctl reload nginx
 - Admin：`https://your-domain.com/admin/`
 - Client：`https://your-domain.com/bouncy-balls/`
 - API：`https://your-domain.com/api/`
+
+## 8. API 404 排查
+
+- 若使用服务器 IP 访问 API，请确保 Nginx `server_name` 包含该 IP。
+- 建议优先使用域名访问：`https://sumuzhi.site/api/...`
+- 修改配置后执行：
+
+```bash
+nginx -t
+systemctl reload nginx
+```
