@@ -14,7 +14,7 @@ const Body = Matter.Body;
 const BALL_RADIUS = 30;
 const FLOOR_OFFSET = 50;
 
-export function useBouncyGame() {
+export function useBouncyGame(enabled = true) {
   const canvasRef = useRef(null);
   const engineRef = useRef(null);
   const runnerRef = useRef(null);
@@ -496,6 +496,10 @@ export function useBouncyGame() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     let disposed = false;
 
     const bootstrap = async () => {
@@ -575,7 +579,7 @@ export function useBouncyGame() {
       }
       audioContextRef.current?.close?.();
     };
-  }, [addMouseControl, applyCollisionForce, createBalls, createWalls, handleResize, renderLoop, resize, updateBallCountDisplay]);
+  }, [addMouseControl, applyCollisionForce, createBalls, createWalls, enabled, handleResize, renderLoop, resize, updateBallCountDisplay]);
 
   const actions = useMemo(
     () => ({
