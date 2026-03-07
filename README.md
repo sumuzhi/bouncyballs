@@ -1,91 +1,159 @@
-# 三年级生字跳跳乐 (Bouncy Balls Monorepo)
+# 三年级生字跳跳乐 Monorepo
 
-这是一个基于 Monorepo 架构的全栈项目，包含游戏前端、后台管理系统和后端服务。
+一个基于 `pnpm workspace` 的全栈项目，包含：
 
-## 项目结构
+- 游戏大厅（Portal）
+- 子游戏（Client，当前为“生字跳跳乐”）
+- 管理后台（Admin）
+- 后端 API（Server）
 
-- **apps/server**: Node.js/Express 后端服务，提供 API 和 MongoDB 数据支持。
-- **apps/client**: 游戏前端 (原生 HTML/JS + Vite)，基于 Matter.js 和 Web Audio API。
-- **apps/admin**: 后台管理系统 (React + Vite + Antd)，用于管理生字数据。
+项目核心目标是：通过互动游戏帮助三年级生字学习，同时提供后台数据管理与 AI 辅助录入能力。
 
-## 快速开始
+## 1. 仓库结构
 
-### 1. 安装依赖
-
-在根目录运行：
-```bash
-npm install
+```text
+bouncyballs-monorepo
+├─ apps
+│  ├─ server   # Node.js + Express + MongoDB API
+│  ├─ portal   # 游戏大厅（主应用）
+│  ├─ client   # 生字跳跳乐子应用（被 portal 嵌入）
+│  └─ admin    # 生字管理后台
+├─ deploy      # 单机部署脚本与 Nginx 配置示例
+├─ package.json
+└─ pnpm-workspace.yaml
 ```
 
-### 2. 配置环境
+## 2. 子项目作用
 
-确保 `apps/server/.env` 文件已正确配置 (MongoDB URI, DeepSeek API Key, JWT Secret 等)。
+- `apps/server`：提供认证、汉字 CRUD、AI 生成拼音/组词等 API，连接 MongoDB。
+- `apps/portal`：用户登录、游戏大厅、子游戏加载容器（通过 Wujie 微前端）。
+- `apps/client`：具体游戏实现（Matter.js 物理引擎 + 麦克风音量驱动互动）。
+- `apps/admin`：管理员登录、汉字录入与编辑、音频与笔顺预览。
 
-### 3. 启动开发环境
+每个子项目均有独立 `README.md`，见各目录。
 
-你可以分别启动各个子项目：
+## 3. 技术栈
 
-- **启动后端**:
-  ```bash
-  npm run server
-  ```
-  (运行在 http://localhost:3000)
+- Monorepo：`pnpm workspace`
+- 前端：`React + Vite + Less`
+- Portal/Admin UI：`Ant Design`
+- 微前端容器：`wujie-react`（Portal 嵌入 Client）
+- 游戏引擎：`matter-js`
+- 后端：`Node.js + Express + Mongoose + JWT`
+- 数据库：`MongoDB`
 
-- **启动游戏前端**:
-  ```bash
-  npm run client
-  ```
-  (运行在 http://localhost:3001)
+## 4. 环境要求
 
-- **启动后台管理**:
-  ```bash
-  npm run admin
-  ```
-  (运行在 http://localhost:3002)
+- Node.js 18+
+- pnpm 8+
+- MongoDB 6+（或兼容版本）
 
-### 3. 使用 PM2 部署 (推荐)
+## 5. 快速开始（开发）
 
-在生产环境中，建议使用 PM2 来管理 Node.js 服务。
+### 5.1 安装依赖
 
-1.  **全局安装 PM2**:
-    ```bash
-    npm install -g pm2
-    ```
-
-2.  **启动服务**:
-    ```bash
-    npm run pm2:start
-    ```
-
-3.  **其他命令**:
-    *   停止服务: `npm run pm2:stop`
-    *   重启服务: `npm run pm2:restart`
-    *   查看日志: `npm run pm2:logs`
-    *   监控状态: `pm2 monit`
-
-### 4. Nginx 反向代理配置
-
-如果您希望使用 Nginx 部署，可以参考以下配置：
-
-1.  在 Nginx 配置目录中创建一个新的配置文件（如 `/etc/nginx/sites-available/bouncyballs`）。
-2.  将项目根目录下的 `nginx.conf` 内容复制进去。
-3.  **修改路径**: 请将配置文件中的 `/path/to/bouncyballs/` 替换为实际的项目路径。
-4.  重启 Nginx:
-    ```bash
-    sudo ln -s /etc/nginx/sites-available/bouncyballs /etc/nginx/sites-enabled/
-    sudo systemctl restart nginx
-    ```
-
-### 4. 数据导入
-
-如果是首次运行，可以导入初始数据：
 ```bash
-npm run seed
+pnpm install
 ```
 
-## 功能特性
+### 5.2 配置环境变量
 
-- **游戏**: 物理引擎驱动的生字互动游戏。
-- **管理**: 现代化的后台管理界面，支持 AI 自动生成生字拼音和组词。
-- **安全**: JWT 身份认证，保护敏感操作。
-- **架构**: Monorepo 结构，便于代码管理和扩展。
+后端按 `NODE_ENV` 自动加载：
+
+- 开发：`apps/server/.env.development`
+- 生产：`apps/server/.env.production`
+
+关键变量（仅列变量名，不要提交真实密钥）：
+
+- `PORT`
+- `MONGO_HOST`
+- `MONGO_PORT`
+- `MONGO_DB`
+- `MONGO_USER`
+- `MONGO_PASS`
+- `MONGO_AUTH_SOURCE`
+- `JWT_SECRET`
+- `DEEPSEEK_API_KEY`
+- `CORS_ORIGINS`
+
+Portal 生产可选变量：
+
+- `apps/portal/.env.production`：`VITE_BOUNCY_BALLS_URL=/bouncy-balls/`
+
+Client 生产可选变量：
+
+- `VITE_PUBLIC_BASE=/bouncy-balls/`
+- `VITE_API_PROXY_TARGET=http://localhost:3000`
+
+### 5.3 分别启动各服务
+
+```bash
+pnpm server   # http://localhost:3000
+pnpm portal   # http://localhost:3003
+pnpm client   # http://localhost:3001
+pnpm admin    # http://localhost:3002
+```
+
+## 6. 根目录可用脚本
+
+```bash
+pnpm install:all     # 安装依赖
+pnpm seed            # 执行后端数据初始化脚本
+pnpm build:client    # 构建 client
+pnpm build:admin     # 构建 admin
+pnpm build:portal    # 构建 portal
+pnpm build:all       # 构建所有子项目
+pnpm start:prod      # 构建全部并启动 server
+pnpm pm2:start       # 使用 PM2 启动 server
+pnpm pm2:stop
+pnpm pm2:restart
+pnpm pm2:delete
+pnpm pm2:logs
+```
+
+## 7. 默认端口与访问地址
+
+- API Server：`http://localhost:3000`
+- Client（生字跳跳乐）：`http://localhost:3001`
+- Admin（管理后台）：`http://localhost:3002`
+- Portal（游戏大厅）：`http://localhost:3003`
+
+## 8. 生产部署说明
+
+请优先参考：
+
+- `deploy/README.md`
+- `deploy/nginx.single-server.conf`
+- `deploy/deploy-frontends.sh`
+
+典型线上路径：
+
+- Portal：`/`
+- Admin：`/admin/`
+- Client：`/bouncy-balls/`
+- API：`/api/`
+
+## 9. 认证与访问控制概览
+
+- Admin 登录态：`adminToken`（localStorage）
+- Portal 登录态：`playerToken`（localStorage）+ `portalToken`（HttpOnly Cookie）
+- Client 在生产环境启动时会校验 `/api/portal/auth/verify`，未授权自动跳转 `/login`
+- Nginx 可通过 `auth_request` 调用 `/api/portal/auth/nginx-verify` 做网关拦截
+
+## 10. 常见问题
+
+### Q1：页面 404 或 API 404
+
+- 检查前端 `base` 路径与 Nginx `location` 是否匹配（尤其 `/admin/`、`/bouncy-balls/`）。
+- 检查前端代理目标 `VITE_API_PROXY_TARGET` 与后端端口是否一致。
+
+### Q2：登录后仍被踢回登录页
+
+- 检查 `JWT_SECRET` 是否一致、Token 是否过期。
+- 检查 `CORS_ORIGINS` 是否包含当前访问域名。
+- 生产环境检查 Nginx 是否正确转发并保留 Cookie。
+
+### Q3：AI 自动生成失败
+
+- 检查 `DEEPSEEK_API_KEY` 是否有效。
+- 检查后端访问外网能力（请求 `api.deepseek.com`）。
