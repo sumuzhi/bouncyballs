@@ -27,6 +27,8 @@
   --logout-color: #5d3cbc;
   --logout-border: rgba(124, 58, 237, 0.32);
   --logout-bg: rgba(124, 58, 237, 0.1);
+  --input-bg: #ffffff;
+  --input-disabled-bg: rgba(0, 0, 0, 0.04);
 }
 
 [data-theme='dark'] {
@@ -54,6 +56,8 @@
   --logout-color: #e8deff;
   --logout-border: rgba(166, 143, 243, 0.45);
   --logout-bg: rgba(124, 58, 237, 0.16);
+  --input-bg: rgba(0, 0, 0, 0.2);
+  --input-disabled-bg: rgba(255, 255, 255, 0.08);
 }
 
 body {

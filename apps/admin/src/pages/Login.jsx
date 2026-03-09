@@ -10,18 +10,15 @@ import {
 import { useNavigate } from 'react-router-dom';
 import SHA256 from 'crypto-js/sha256';
 import api from '../utils/api';
-import { applyTheme, getStoredTheme, THEME_DARK, THEME_LIGHT } from '../utils/theme';
+import { THEME_LIGHT } from '../utils/theme';
+import { useTheme } from '../components/ThemeProvider';
 import styles from './Login.module.less';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true); // 新增：授权检查状态
-  const [theme, setTheme] = useState(() => getStoredTheme());
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
 
   useEffect(() => {
     const checkToken = async () => {
@@ -49,9 +46,7 @@ const Login = () => {
     );
   }
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === THEME_LIGHT ? THEME_DARK : THEME_LIGHT));
-  };
+
 
   const onLogin = async (values) => {
     setLoading(true);

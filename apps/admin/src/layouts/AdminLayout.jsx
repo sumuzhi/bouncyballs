@@ -7,9 +7,9 @@ import {
   RadarChartOutlined,
 } from '@ant-design/icons';
 import { Button, Menu } from 'antd';
-import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { applyTheme, getStoredTheme, THEME_DARK, THEME_LIGHT } from '../utils/theme';
+import { THEME_LIGHT } from '../utils/theme';
+import { useTheme } from '../components/ThemeProvider';
 import styles from './AdminLayout.module.less';
 
 const menuItems = [
@@ -28,21 +28,13 @@ const menuItems = [
 export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [theme, setTheme] = useState(() => getStoredTheme());
+  const { theme, toggleTheme } = useTheme();
   const selectedKey = location.pathname.startsWith('/words') ? '/words' : '/characters';
-
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminUser');
     navigate('/login');
-  };
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === THEME_LIGHT ? THEME_DARK : THEME_LIGHT));
   };
 
   return (
