@@ -318,7 +318,7 @@ async function generateImageByWord(word, isAsync = true) {
       };
 
       const response = await axios.post('https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis', {
-        model: "wanx-v1",
+        model: "wan2.5-t2i-preview",
         input: {
           prompt: prompt
         },
@@ -333,7 +333,7 @@ async function generateImageByWord(word, isAsync = true) {
       console.log(`[AI] Image task started: ${taskId}`);
 
       // 2. 轮询任务状态
-      for (let i = 0; i < 20; i++) { // 最多等待 20 * 2 = 40秒
+      for (let i = 0; i < 30; i++) { // 最多等待 30 * 2 = 60秒
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         const taskResponse = await axios.get(`https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`, {
@@ -361,7 +361,7 @@ async function generateImageByWord(word, isAsync = true) {
       };
 
       const response = await axios.post('https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation', {
-        model: "qwen-image-2.0-pro",
+        model: "wan2.6-t2i",
         input: {
           messages: [
             {
@@ -512,18 +512,6 @@ JSON格式：
         return true;
       })
       .slice(0, 200);
-
-    // 批量为生成的单词异步生成图片
-    // 注意：这里并行触发可能会触及 API 速率限制，实际生产中建议控制并发
-    await Promise.all(items.map(async (item) => {
-        try {
-            const image = await generateImageByWord(item.en, true); // 使用异步生成
-            item.image = image;
-        } catch (imgErr) {
-            console.error(`[AI] Failed to async generate image for batch item ${item.en}:`, imgErr.message);
-            item.image = null;
-        }
-    }));
 
     return items;
   } catch (error) {
@@ -973,8 +961,20 @@ app.post('/api/word-pairs/batch-import', authenticateToken, authorizeApps(['admi
           summary.duplicatedEntries.push({ en: item.en, zh: item.zh });
         }
       } else {
-        await WordPair.create(item);
+        const created = await WordPair.create(item);
         summary.created += 1;
+        
+        // 异步后台生成图片
+        generateImageByWord(created.en, true)
+            .then(async (image) => {
+                if (image) {
+                    await WordPair.updateOne({ _id: created._id }, { $set: { image } });
+                    console.log(`[AI] Background image generated for ${created.en}`);
+                }
+            })
+            .catch((err) => {
+                console.error(`[AI] Background image generation failed for ${created.en}:`, err.message);
+            });
       }
     }
 

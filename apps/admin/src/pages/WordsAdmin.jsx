@@ -312,7 +312,7 @@ export default function WordsAdmin() {
         items: selectedItems,
       });
       const result = response.data;
-      message.success(`录入完成，新增 ${result.created} 条，跳过重复 ${result.skipped} 条，无效 ${result.invalid} 条`);
+      message.success(`录入完成，新增 ${result.created} 条，跳过重复 ${result.skipped} 条，无效 ${result.invalid} 条。图片将在后台生成，请稍后刷新查看。`);
       
       if (Array.isArray(result.duplicatedEntries) && result.duplicatedEntries.length) {
         Modal.info({
