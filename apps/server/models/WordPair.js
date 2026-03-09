@@ -21,6 +21,10 @@ const WordPairSchema = new mongoose.Schema({
     enum: ['easy', 'medium', 'hard'],
     default: 'easy',
   },
+  image: {
+    type: String, // Base64 image
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

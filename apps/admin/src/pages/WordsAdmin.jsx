@@ -13,6 +13,7 @@ import {
   Upload,
   message,
   Checkbox,
+  Image,
 } from 'antd';
 import {
   BookOutlined,
@@ -28,6 +29,7 @@ import {
   SearchOutlined,
   RobotOutlined,
   ThunderboltOutlined,
+  PictureOutlined,
 } from '@ant-design/icons';
 import api from '../utils/api';
 import useWordPairs from '../hooks/useWordPairs';
@@ -57,6 +59,7 @@ export default function WordsAdmin() {
   const [reviewReady, setReviewReady] = useState(false);
   const [smartGenerating, setSmartGenerating] = useState(false);
   const [smartSubmitting, setSmartSubmitting] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState(null);
 
   const parseCsv = (text) => {
     const lines = text
@@ -156,6 +159,7 @@ export default function WordsAdmin() {
     setEditingItem(null);
     form.resetFields();
     form.setFieldsValue({ difficulty: 'easy', category: 'general' });
+    setGeneratedImage(null);
     setOpen(true);
   };
 
@@ -166,24 +170,28 @@ export default function WordsAdmin() {
       zh: item.zh,
       difficulty: item.difficulty || 'easy',
       category: item.category || 'general',
+      image: item.image,
     });
+    setGeneratedImage(item.image);
     setOpen(true);
   };
 
   const closeModal = () => {
     setOpen(false);
     setEditingItem(null);
+    setGeneratedImage(null);
   };
 
   const submitForm = async () => {
     try {
       const values = await form.validateFields();
+      const payload = { ...values, image: generatedImage };
       setSubmitting(true);
       if (editingItem?._id) {
-        await api.put(`/word-pairs/${editingItem._id}`, values);
+        await api.put(`/word-pairs/${editingItem._id}`, payload);
         message.success('词条更新成功');
       } else {
-        await api.post('/word-pairs', values);
+        await api.post('/word-pairs', payload);
         message.success('词条创建成功');
       }
       closeModal();
@@ -216,6 +224,9 @@ export default function WordsAdmin() {
             en: response.data.en,
             zh: response.data.zh
         });
+        if (response.data.image) {
+            setGeneratedImage(response.data.image);
+        }
         message.success('AI 生成成功');
     } catch (error) {
         message.error(error.response?.data?.message || 'AI 生成失败');
@@ -512,6 +523,18 @@ export default function WordsAdmin() {
           <Form.Item name="category" label="分类">
             <Input placeholder="例如: food / animal / transport" />
           </Form.Item>
+          {generatedImage && (
+            <div style={{ marginTop: 16, marginBottom: 16, textAlign: 'center' }}>
+              <div style={{ marginBottom: 8, color: 'var(--subtitle-color)', fontSize: 13 }}>
+                <PictureOutlined style={{ marginRight: 6 }} /> AI 生成配图
+              </div>
+              <Image
+                src={generatedImage}
+                width={200}
+                style={{ borderRadius: 8, border: '1px solid var(--card-border)' }}
+              />
+            </div>
+          )}
         </Form>
       </Modal>
 

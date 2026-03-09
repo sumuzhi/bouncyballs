@@ -114,13 +114,6 @@ const normalizeWordPairDifficulty = (difficulty) => {
   return 'easy';
 };
 
-const normalizeWordPairRecord = (item = {}) => {
-  const en = String(item.en || '').trim();
-  const zh = String(item.zh || '').trim();
-  const category = String(item.category || 'general').trim() || 'general';
-  const difficulty = normalizeWordPairDifficulty(item.difficulty);
-  return { en, zh, category, difficulty };
-};
 
 const buildWordPairFilters = (req) => {
   const keyword = (req.query.keyword || '').trim();
@@ -140,6 +133,15 @@ const buildWordPairFilters = (req) => {
     filters.category = category;
   }
   return filters;
+};
+
+const normalizeWordPairRecord = (item = {}) => {
+  const en = String(item.en || '').trim();
+  const zh = String(item.zh || '').trim();
+  const category = String(item.category || 'general').trim() || 'general';
+  const difficulty = normalizeWordPairDifficulty(item.difficulty);
+  const image = item.image || null;
+  return { en, zh, category, difficulty, image };
 };
 
 const escapeCsv = (value) => `"${String(value || '').replace(/"/g, '""')}"`;
@@ -293,6 +295,120 @@ JSON格式：
   }
 }
 
+async function generateImageByWord(word, isAsync = true) {
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+  if (!apiKey) {
+    throw new Error('DASHSCOPE_API_KEY is not configured');
+  }
+
+  // 1. 生成图片
+  const prompt = `A cute cartoon style illustration for the word "${word}". Simple, colorful, educational, suitable for children, white background.`;
+  
+  console.log(`[AI] Generating image for word: ${word} (Async: ${isAsync})...`);
+  
+  try {
+    let imageUrl = null;
+
+    if (isAsync) {
+      // 异步模式：使用 wanx-v1 模型
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'X-DashScope-Async': 'enable'
+      };
+
+      const response = await axios.post('https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis', {
+        model: "wanx-v1",
+        input: {
+          prompt: prompt
+        },
+        parameters: {
+          style: "<auto>",
+          size: "1024*1024",
+          n: 1
+        }
+      }, { headers });
+
+      const taskId = response.data.output.task_id;
+      console.log(`[AI] Image task started: ${taskId}`);
+
+      // 2. 轮询任务状态
+      for (let i = 0; i < 20; i++) { // 最多等待 20 * 2 = 40秒
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const taskResponse = await axios.get(`https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`, {
+          headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+
+        const status = taskResponse.data.output.task_status;
+        if (status === 'SUCCEEDED') {
+          imageUrl = taskResponse.data.output.results[0].url;
+          break;
+        } else if (status === 'FAILED') {
+          throw new Error(`Image generation failed: ${taskResponse.data.output.message}`);
+        }
+      }
+
+      if (!imageUrl) {
+        throw new Error('Image generation timed out');
+      }
+    } else {
+      // 同步模式：使用 qwen-image-2.0-pro 模型 (multimodal-generation 接口)
+      // 参考官方 Demo: https://help.aliyun.com/zh/dashscope/developer-reference/qwen-image-generation-api
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      };
+
+      const response = await axios.post('https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation', {
+        model: "qwen-image-2.0-pro",
+        input: {
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  text: prompt
+                }
+              ]
+            }
+          ]
+        },
+        parameters: {
+          size: "1024*1024",
+          n: 1
+        }
+      }, { headers });
+
+      if (response.data.output && response.data.output.choices && response.data.output.choices[0] && response.data.output.choices[0].message && response.data.output.choices[0].message.content) {
+         // Qwen-image 的返回结构中，图片通常在 content 数组中
+         const content = response.data.output.choices[0].message.content;
+         if (Array.isArray(content)) {
+             const imgItem = content.find(item => item.image);
+             if (imgItem) {
+                 imageUrl = imgItem.image;
+             }
+         }
+      } 
+      
+      if (!imageUrl) {
+         throw new Error(`Image generation failed: ${JSON.stringify(response.data)}`);
+      }
+    }
+
+    // 3. 下载并转 Base64
+    console.log(`[AI] Downloading image from: ${imageUrl}`);
+    const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    const base64Image = Buffer.from(imageResponse.data, 'binary').toString('base64');
+    return `data:image/png;base64,${base64Image}`;
+
+  } catch (error) {
+    console.error('DashScope API Error:', error.response ? error.response.data : error.message);
+    // Don't throw, return null to allow partial success
+    return null;
+  }
+}
+
 async function fetchWordDetails(word) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
@@ -330,9 +446,15 @@ async function fetchWordDetails(word) {
       data = JSON.parse(content);
     }
 
+    let image = null;
+    // 只有在批量生成时，才在这里尝试异步生成图片
+    // 单个单词补全时，fetchWordDetails 不再负责生成图片，而是由上层调用者（/api/ai-generate-word）决定使用同步生成
+    // 这里的 data.en || word 是为了确保有英文作为 prompt
+    
     return {
       en: data.en || '',
-      zh: data.zh || ''
+      zh: data.zh || '',
+      image
     };
   } catch (error) {
     console.error('DeepSeek API Error:', error.response ? error.response.data : error.message);
@@ -390,6 +512,19 @@ JSON格式：
         return true;
       })
       .slice(0, 200);
+
+    // 批量为生成的单词异步生成图片
+    // 注意：这里并行触发可能会触及 API 速率限制，实际生产中建议控制并发
+    await Promise.all(items.map(async (item) => {
+        try {
+            const image = await generateImageByWord(item.en, true); // 使用异步生成
+            item.image = image;
+        } catch (imgErr) {
+            console.error(`[AI] Failed to async generate image for batch item ${item.en}:`, imgErr.message);
+            item.image = null;
+        }
+    }));
+
     return items;
   } catch (error) {
     console.error('DeepSeek Batch API Error:', error.response ? error.response.data : error.message);
@@ -502,6 +637,18 @@ app.get('/api/ai-generate-word', authenticateToken, authorizeApps(['admin']), as
 
   try {
     const details = await fetchWordDetails(word);
+    
+    // 单个单词补全时，尝试使用同步生成方式获取图片
+    // 如果获取成功，details.image 会被覆盖
+    try {
+        const syncImage = await generateImageByWord(details.en || word, false);
+        if (syncImage) {
+            details.image = syncImage;
+        }
+    } catch (imgErr) {
+        console.error(`[AI] Sync image generation failed, falling back to async result or null:`, imgErr.message);
+    }
+
     res.json(details);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -839,7 +986,7 @@ app.post('/api/word-pairs/batch-import', authenticateToken, authorizeApps(['admi
 
 app.post('/api/word-pairs', authenticateToken, authorizeApps(['admin']), async (req, res) => {
   try {
-    const { en, zh, category, difficulty } = req.body;
+    const { en, zh, category, difficulty, image } = req.body;
     if (!en || !zh) {
       return res.status(400).json({ message: 'English and Chinese are required' });
     }
@@ -848,6 +995,7 @@ app.post('/api/word-pairs', authenticateToken, authorizeApps(['admin']), async (
       zh: String(zh).trim(),
       category: category ? String(category).trim() : 'general',
       difficulty: normalizeWordPairDifficulty(difficulty),
+      image: image || null
     });
     const saved = await newWordPair.save();
     return res.status(201).json(saved);
@@ -861,7 +1009,7 @@ app.post('/api/word-pairs', authenticateToken, authorizeApps(['admin']), async (
 
 app.put('/api/word-pairs/:id', authenticateToken, authorizeApps(['admin']), validateWordPairId, async (req, res) => {
   try {
-    const { en, zh, category, difficulty } = req.body;
+    const { en, zh, category, difficulty, image } = req.body;
     const wordPair = await WordPair.findById(req.params.id);
     if (!wordPair) {
       return res.status(404).json({ message: 'Word pair not found' });
@@ -877,6 +1025,9 @@ app.put('/api/word-pairs/:id', authenticateToken, authorizeApps(['admin']), vali
     }
     if (difficulty !== undefined) {
       wordPair.difficulty = normalizeWordPairDifficulty(difficulty);
+    }
+    if (image !== undefined) {
+      wordPair.image = image;
     }
     const updated = await wordPair.save();
     return res.json(updated);
