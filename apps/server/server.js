@@ -293,6 +293,110 @@ JSON格式：
   }
 }
 
+async function fetchWordDetails(word) {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    throw new Error('DEEPSEEK_API_KEY is not configured');
+  }
+
+  const prompt = `请提供单词"${word}"的中文翻译。如果是中文，请提供对应的英文翻译。如果是英文，请提供对应的中文翻译。严格返回JSON格式，包含 "en" (英文) 和 "zh" (中文) 两个字段。示例：{"en": "apple", "zh": "苹果"}`;
+
+  console.log(`[AI] Generating details for word: ${word}...`);
+  
+  try {
+    const response = await axios.post('https://api.deepseek.com/chat/completions', {
+      model: "deepseek-chat",
+      messages: [
+        { role: "system", content: "You are a helpful assistant. Please output the response in strictly valid JSON format." },
+        { role: "user", content: prompt }
+      ],
+      response_format: {
+        'type': 'json_object'
+      },
+      temperature: 0.1
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      }
+    });
+
+    const content = response.data.choices[0].message.content;
+    let data;
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      data = JSON.parse(jsonMatch[0]);
+    } else {
+      data = JSON.parse(content);
+    }
+
+    return {
+      en: data.en || '',
+      zh: data.zh || ''
+    };
+  } catch (error) {
+    console.error('DeepSeek API Error:', error.response ? error.response.data : error.message);
+    throw new Error('Failed to fetch word details from AI');
+  }
+}
+
+async function fetchWordPairsByPrompt(prompt) {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    throw new Error('DEEPSEEK_API_KEY is not configured');
+  }
+  const userPrompt = `用户需求：${prompt}
+你是一名英语老师。请根据需求生成单词学习清单，要求联网搜索用户需求，严格返回JSON，不要markdown。
+JSON格式：
+{"items":[{"en":"spring","zh":"春天","category":"season","difficulty":"easy"}]}
+要求：
+1) items是数组；
+2) en必须为英文单词或短语；
+3) zh必须为中文翻译；
+4) category为分类（如food, animal, nature等），默认general；
+5) difficulty为难度（easy, medium, hard），默认easy。`;
+  
+  try {
+    const response = await axios.post('https://api.deepseek.com/chat/completions', {
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant. Return strictly valid JSON only.' },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: {
+        type: 'json_object',
+      },
+      temperature: 1.0,
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+    const content = response.data.choices[0].message.content;
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+    const incoming = Array.isArray(parsed?.items) ? parsed.items : [];
+    const dedup = new Set();
+    const items = incoming
+      .map((item) => normalizeWordPairRecord(item))
+      .filter((item) => item.en && item.zh)
+      .filter((item) => {
+        const key = `${item.en.toLowerCase()}__${item.zh}`;
+        if (dedup.has(key)) {
+          return false;
+        }
+        dedup.add(key);
+        return true;
+      })
+      .slice(0, 200);
+    return items;
+  } catch (error) {
+    console.error('DeepSeek Batch API Error:', error.response ? error.response.data : error.message);
+    throw new Error('Failed to generate word list from AI');
+  }
+}
+
 async function fetchAudioByPinyin(pinyin) {
   if (!pinyin) {
     return null;
@@ -384,6 +488,33 @@ app.post('/api/ai-generate-characters', authenticateToken, authorizeApps(['admin
   }
   try {
     const items = await fetchCharactersByPrompt(prompt);
+    return res.status(200).json({ items });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/ai-generate-word', authenticateToken, authorizeApps(['admin']), async (req, res) => {
+  const word = req.query.word;
+  if (!word) {
+    return res.status(400).json({ message: 'Word is required' });
+  }
+
+  try {
+    const details = await fetchWordDetails(word);
+    res.json(details);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/ai-generate-word-pairs', authenticateToken, authorizeApps(['admin']), async (req, res) => {
+  const prompt = String(req.body?.prompt || '').trim();
+  if (!prompt) {
+    return res.status(400).json({ message: 'Prompt is required' });
+  }
+  try {
+    const items = await fetchWordPairsByPrompt(prompt);
     return res.status(200).json({ items });
   } catch (err) {
     return res.status(500).json({ message: err.message });

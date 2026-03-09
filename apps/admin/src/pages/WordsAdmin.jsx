@@ -12,6 +12,7 @@ import {
   Typography,
   Upload,
   message,
+  Checkbox,
 } from 'antd';
 import {
   BookOutlined,
@@ -25,6 +26,8 @@ import {
   PlusOutlined,
   RocketOutlined,
   SearchOutlined,
+  RobotOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import api from '../utils/api';
 import useWordPairs from '../hooks/useWordPairs';
@@ -47,6 +50,13 @@ export default function WordsAdmin() {
   const [keyword, setKeyword] = useState('');
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [smartOpen, setSmartOpen] = useState(false);
+  const [smartPrompt, setSmartPrompt] = useState('');
+  const [reviewItems, setReviewItems] = useState([]);
+  const [reviewReady, setReviewReady] = useState(false);
+  const [smartGenerating, setSmartGenerating] = useState(false);
+  const [smartSubmitting, setSmartSubmitting] = useState(false);
 
   const parseCsv = (text) => {
     const lines = text
@@ -96,8 +106,10 @@ export default function WordsAdmin() {
       if (Array.isArray(result.duplicatedEntries) && result.duplicatedEntries.length) {
         Modal.info({
           title: '检测到重复词条',
+          icon: <ThunderboltOutlined style={{ color: '#faad14' }} />,
+          okType: 'default',
           content: (
-            <div className="max-h-52 overflow-auto">
+            <div className={styles.duplicateList}>
               {result.duplicatedEntries.map((item) => (
                 <div key={`${item.en}-${item.zh}`} className={styles.duplicateRow}>
                   {item.en} - {item.zh}
@@ -182,6 +194,137 @@ export default function WordsAdmin() {
       }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleAiGenerate = async () => {
+    const en = form.getFieldValue('en');
+    const zh = form.getFieldValue('zh');
+    
+    // 如果都为空，提示输入
+    if (!en && !zh) {
+        message.warning('请先输入中文或英文');
+        return;
+    }
+
+    // 优先使用中文生成英文，如果中文为空则使用英文生成中文
+    const word = zh || en;
+    setAiLoading(true);
+    try {
+        const response = await api.get(`/ai-generate-word?word=${encodeURIComponent(word)}`);
+        form.setFieldsValue({
+            en: response.data.en,
+            zh: response.data.zh
+        });
+        message.success('AI 生成成功');
+    } catch (error) {
+        message.error(error.response?.data?.message || 'AI 生成失败');
+    } finally {
+        setAiLoading(false);
+    }
+  };
+
+  const openSmartModal = () => {
+    setSmartOpen(true);
+    setSmartPrompt('');
+    setReviewItems([]);
+    setReviewReady(false);
+  };
+
+  const closeSmartModal = () => {
+    setSmartOpen(false);
+    setSmartPrompt('');
+    setReviewItems([]);
+    setReviewReady(false);
+  };
+
+  const handleSmartCancel = () => {
+    if (reviewReady) {
+      setReviewReady(false);
+      return;
+    }
+    closeSmartModal();
+  };
+
+  const updateReviewItem = (index, patch) => {
+    setReviewItems((prev) => prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item)));
+  };
+
+  const handleSmartGenerate = async () => {
+    if (!smartPrompt.trim()) {
+      message.warning('请输入AI需求，例如：生成动物相关的单词');
+      return;
+    }
+    setSmartGenerating(true);
+    try {
+      const response = await api.post('/ai-generate-word-pairs', { prompt: smartPrompt.trim() });
+      const items = Array.isArray(response.data?.items) ? response.data.items : [];
+      if (!items.length) {
+        throw new Error('AI 未返回可用单词，请调整描述后重试');
+      }
+      setReviewItems(
+        items.map((item) => ({
+          selected: true,
+          en: String(item.en || '').trim(),
+          zh: String(item.zh || '').trim(),
+          category: String(item.category || 'general').trim(),
+          difficulty: String(item.difficulty || 'easy').trim(),
+        })),
+      );
+      setReviewReady(true);
+      message.success(`AI 已生成 ${items.length} 条候选单词，请审核后提交`);
+    } catch (error) {
+      message.error(error.response?.data?.message || error.message || 'AI 生成失败');
+    } finally {
+      setSmartGenerating(false);
+    }
+  };
+
+  const handleSmartSubmit = async () => {
+    const selectedItems = reviewItems
+      .filter((item) => item.selected)
+      .map((item) => ({
+        en: String(item.en || '').trim(),
+        zh: String(item.zh || '').trim(),
+        category: item.category,
+        difficulty: item.difficulty,
+      }))
+      .filter((item) => item.en && item.zh);
+      
+    if (!selectedItems.length) {
+      message.warning('请至少选择一条有效数据');
+      return;
+    }
+    setSmartSubmitting(true);
+    try {
+      const response = await api.post('/word-pairs/batch-import', {
+        items: selectedItems,
+      });
+      const result = response.data;
+      message.success(`录入完成，新增 ${result.created} 条，跳过重复 ${result.skipped} 条，无效 ${result.invalid} 条`);
+      
+      if (Array.isArray(result.duplicatedEntries) && result.duplicatedEntries.length) {
+        Modal.info({
+          title: '检测到重复单词',
+          icon: <ThunderboltOutlined style={{ color: '#faad14' }} />,
+          okType: 'default',
+          content: (
+            <div className={styles.duplicateList}>
+              {result.duplicatedEntries.map((item) => (
+                <div key={`${item.en}-${item.zh}`} className={styles.duplicateRow}>
+                  {item.en} - {item.zh}
+                </div>
+              ))}
+            </div>
+          ),
+        });
+      }
+      fetchData(1, pagination.pageSize, keyword);
+      closeSmartModal();
+    } catch (error) {
+      message.error(error.response?.data?.message || '批量录入失败');
+    } finally {
+      setSmartSubmitting(false);
     }
   };
 
@@ -271,6 +414,9 @@ export default function WordsAdmin() {
               <Button icon={<CloudDownloadOutlined />} loading={exporting} onClick={handleExport}>
                 导出CSV
               </Button>
+              <Button icon={<ThunderboltOutlined />} onClick={openSmartModal}>
+                智能录入
+              </Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
                 新增词条
               </Button>
@@ -339,12 +485,21 @@ export default function WordsAdmin() {
         cancelText="取消"
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="en" label="English" rules={[{ required: true, message: '请输入英文' }]}>
-            <Input placeholder="例如: apple" />
-          </Form.Item>
           <Form.Item name="zh" label="中文" rules={[{ required: true, message: '请输入中文' }]}>
             <Input placeholder="例如: 苹果" />
           </Form.Item>
+          <Form.Item name="en" label="English" rules={[{ required: true, message: '请输入英文' }]}>
+            <Input placeholder="例如: apple" />
+          </Form.Item>
+          <Button 
+            icon={<RobotOutlined />} 
+            onClick={handleAiGenerate} 
+            loading={aiLoading}
+            block
+            style={{ marginBottom: 24 }}
+          >
+            AI 自动翻译/补全
+          </Button>
           <Form.Item name="difficulty" label="难度">
             <Select
               options={[
@@ -359,6 +514,71 @@ export default function WordsAdmin() {
           </Form.Item>
         </Form>
       </Modal>
+
+      <Modal
+          title="智能录入单词"
+          open={smartOpen}
+          onCancel={handleSmartCancel}
+          onOk={reviewReady ? handleSmartSubmit : handleSmartGenerate}
+          okButtonProps={{ loading: reviewReady ? smartSubmitting : smartGenerating }}
+          confirmLoading={smartSubmitting}
+          okText={reviewReady ? '确认录入' : 'AI生成'}
+          cancelText={reviewReady ? '返回输入' : '取消'}
+          width={760}
+        >
+          {!reviewReady && (
+            <>
+              <p className={styles.smartTip}>输入自然语言需求，AI会一次性生成候选单词清单。</p>
+              <Input.TextArea
+                value={smartPrompt}
+                onChange={(event) => setSmartPrompt(event.target.value)}
+                rows={5}
+                placeholder="例如：生成10个水果相关的单词，难度为easy"
+              />
+            </>
+          )}
+          {reviewReady && (
+            <div className={styles.reviewWrap}>
+              <p className={styles.smartTip}>请审核并编辑后提交，取消勾选可排除不需要的单词。</p>
+              {reviewItems.map((item, index) => (
+                <div key={`${item.en}-${index}`} className={styles.reviewRow}>
+                  <Checkbox
+                    checked={item.selected}
+                    onChange={(event) => updateReviewItem(index, { selected: event.target.checked })}
+                  />
+                  <Input
+                    value={item.en}
+                    onChange={(event) => updateReviewItem(index, { en: event.target.value })}
+                    placeholder="English"
+                    style={{ flex: 1.5, fontWeight: 600 }}
+                  />
+                  <Input
+                    value={item.zh}
+                    onChange={(event) => updateReviewItem(index, { zh: event.target.value })}
+                    placeholder="中文"
+                    style={{ flex: 1 }}
+                  />
+                  <Input
+                    value={item.category}
+                    onChange={(event) => updateReviewItem(index, { category: event.target.value })}
+                    placeholder="分类"
+                    style={{ width: 120 }}
+                  />
+                  <Select
+                    value={item.difficulty}
+                    onChange={(value) => updateReviewItem(index, { difficulty: value })}
+                    options={[
+                        { value: 'easy', label: 'easy' },
+                        { value: 'medium', label: 'medium' },
+                        { value: 'hard', label: 'hard' },
+                    ]}
+                    style={{ width: 100 }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </Modal>
     </div>
   );
 }

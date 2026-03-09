@@ -89,6 +89,48 @@
   color: var(--title-color);
 }
 
+.smartTip {
+  margin: 0 0 10px;
+  color: var(--subtitle-color);
+  font-size: 13px;
+}
+
+.reviewWrap {
+  max-height: 420px;
+  overflow: auto;
+  border-radius: 12px;
+  background: var(--input-disabled-bg);
+  padding: 10px;
+  border: 1px solid var(--card-border);
+}
+
+.reviewRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  background: var(--card-start);
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.reviewRow:last-child {
+  margin-bottom: 0;
+}
+
+.reviewChar {
+  flex: 1;
+  font-weight: 600;
+  color: var(--title-color);
+}
+
+.reviewPinyin {
+  flex: 1;
+  color: var(--subtitle-color);
+}
+
 @media (max-width: 768px) {
   .page {
     padding: 12px;
