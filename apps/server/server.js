@@ -14,6 +14,7 @@ require('dotenv').config({ path: path.join(__dirname, envFile), override: true }
 
 
 const Character = require('./models/Character');
+const WordPair = require('./models/WordPair');
 const { createAuthRouter } = require('./routes/auth');
 
 const app = express();
@@ -77,6 +78,71 @@ const validateCharacterId = (req, res, next) => {
   }
   return next();
 };
+
+const validateWordPairId = (req, res, next) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: 'Invalid word pair id' });
+  }
+  return next();
+};
+
+const normalizeCharacterRecord = (item = {}) => {
+  const char = String(item.char || '').trim();
+  const pinyin = String(item.pinyin || '').trim();
+  const examples = Array.isArray(item.examples)
+    ? item.examples.map((entry) => String(entry || '').trim()).filter(Boolean)
+    : String(item.examples || '')
+      .split(/[,，|]/)
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  const audio = item.audio || null;
+  const stroke = item.stroke || null;
+  return {
+    char,
+    pinyin,
+    examples,
+    audio,
+    stroke,
+  };
+};
+
+const normalizeWordPairDifficulty = (difficulty) => {
+  const candidate = String(difficulty || 'easy').trim().toLowerCase();
+  if (['easy', 'medium', 'hard'].includes(candidate)) {
+    return candidate;
+  }
+  return 'easy';
+};
+
+const normalizeWordPairRecord = (item = {}) => {
+  const en = String(item.en || '').trim();
+  const zh = String(item.zh || '').trim();
+  const category = String(item.category || 'general').trim() || 'general';
+  const difficulty = normalizeWordPairDifficulty(item.difficulty);
+  return { en, zh, category, difficulty };
+};
+
+const buildWordPairFilters = (req) => {
+  const keyword = (req.query.keyword || '').trim();
+  const difficulty = (req.query.difficulty || '').trim();
+  const category = (req.query.category || '').trim();
+  const filters = {};
+  if (keyword) {
+    filters.$or = [
+      { en: { $regex: keyword, $options: 'i' } },
+      { zh: { $regex: keyword, $options: 'i' } },
+    ];
+  }
+  if (difficulty) {
+    filters.difficulty = difficulty;
+  }
+  if (category) {
+    filters.category = category;
+  }
+  return filters;
+};
+
+const escapeCsv = (value) => `"${String(value || '').replace(/"/g, '""')}"`;
 
 // Database Connection
 const MONGO_HOST = process.env.MONGO_HOST || '127.0.0.1';
@@ -172,6 +238,123 @@ async function fetchCharDetails(char) {
   }
 }
 
+async function fetchCharactersByPrompt(prompt) {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    throw new Error('DEEPSEEK_API_KEY is not configured');
+  }
+  const userPrompt = `用户需求：${prompt}
+你是一名小学语文老师。请根据需求生成汉字学习清单，要求联网搜索用户需求，严格返回JSON，不要markdown。
+JSON格式：
+{"items":[{"char":"春","pinyin":"chūn","examples":["春天","春风","春雨"]}]}
+要求：
+1) items是数组；
+2) char必须为单个汉字；
+3) pinyin必须有声调；
+4) examples必须是1-3个常见词语。`;
+  try {
+    const response = await axios.post('https://api.deepseek.com/chat/completions', {
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant. Return strictly valid JSON only.' },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: {
+        type: 'json_object',
+      },
+      temperature: 1.0,
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+    const content = response.data.choices[0].message.content;
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+    const incoming = Array.isArray(parsed?.items) ? parsed.items : [];
+    const dedup = new Set();
+    const items = incoming
+      .map((item) => normalizeCharacterRecord(item))
+      .filter((item) => item.char && item.char.length === 1 && item.pinyin)
+      .filter((item) => {
+        const key = `${item.char}__${item.pinyin}`;
+        if (dedup.has(key)) {
+          return false;
+        }
+        dedup.add(key);
+        return true;
+      })
+      .slice(0, 200);
+    return items;
+  } catch (error) {
+    console.error('DeepSeek Batch API Error:', error.response ? error.response.data : error.message);
+    throw new Error('Failed to generate character list from AI');
+  }
+}
+
+async function fetchAudioByPinyin(pinyin) {
+  if (!pinyin) {
+    return null;
+  }
+  try {
+    const audioUrl = `https://img.zdic.net/audio/zd/py/${pinyin}.mp3`;
+    console.log(`[Audio] Downloading from: ${audioUrl}`);
+    const audioResponse = await axios.get(encodeURI(audioUrl), { responseType: 'arraybuffer' });
+    const base64Audio = Buffer.from(audioResponse.data, 'binary').toString('base64');
+    return `data:audio/mp3;base64,${base64Audio}`;
+  } catch (error) {
+    console.error(`[Audio] Async download failed for ${pinyin}:`, error.message);
+    return null;
+  }
+}
+
+async function fetchStrokeByChar(char) {
+  if (!char) {
+    return null;
+  }
+  try {
+    const charCode = char.charCodeAt(0).toString(16).toUpperCase();
+    const strokeUrl = `https://img.zdic.net/kai/jbh/${charCode}.gif`;
+    console.log(`[Stroke] Downloading from: ${strokeUrl}`);
+    const strokeResponse = await axios.get(strokeUrl, { responseType: 'arraybuffer' });
+    const base64Stroke = Buffer.from(strokeResponse.data, 'binary').toString('base64');
+    return `data:image/gif;base64,${base64Stroke}`;
+  } catch (error) {
+    console.error(`[Stroke] Async download failed for ${char}:`, error.message);
+    return null;
+  }
+}
+
+function enrichCharacterMediaAsync(characterId, char, pinyin) {
+  Promise.resolve()
+    .then(async () => {
+      const current = await Character.findById(characterId).lean();
+      if (!current) {
+        return;
+      }
+      const updates = {};
+      if (!current.audio) {
+        const audio = await fetchAudioByPinyin(pinyin || current.pinyin);
+        if (audio) {
+          updates.audio = audio;
+        }
+      }
+      if (!current.stroke) {
+        const stroke = await fetchStrokeByChar(char || current.char);
+        if (stroke) {
+          updates.stroke = stroke;
+        }
+      }
+      if (Object.keys(updates).length) {
+        await Character.updateOne({ _id: characterId }, { $set: updates });
+      }
+    })
+    .catch((error) => {
+      console.error(`[Async Media] Failed for ${char}:`, error.message);
+    });
+}
+
 // API Routes
 
 // Auth Routes
@@ -191,6 +374,19 @@ app.get('/api/ai-generate', authenticateToken, authorizeApps(['admin']), async (
     res.json(details);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/ai-generate-characters', authenticateToken, authorizeApps(['admin']), async (req, res) => {
+  const prompt = String(req.body?.prompt || '').trim();
+  if (!prompt) {
+    return res.status(400).json({ message: 'Prompt is required' });
+  }
+  try {
+    const items = await fetchCharactersByPrompt(prompt);
+    return res.status(200).json({ items });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
   }
 });
 
@@ -222,25 +418,50 @@ app.get('/api/characters', authenticateToken, authorizeApps(['portal', 'admin'])
   }
 });
 
+app.get('/api/characters/export', authenticateToken, authorizeApps(['admin']), async (req, res) => {
+  try {
+    const data = await Character.find().sort({ createdAt: -1 });
+    const header = ['char', 'pinyin', 'examples', 'createdAt'];
+    const lines = [header.join(',')];
+    data.forEach((item) => {
+      lines.push(
+        [
+          escapeCsv(item.char),
+          escapeCsv(item.pinyin),
+          escapeCsv(Array.isArray(item.examples) ? item.examples.join('|') : ''),
+          escapeCsv(item.createdAt ? item.createdAt.toISOString() : ''),
+        ].join(','),
+      );
+    });
+    const csv = lines.join('\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="characters-${Date.now()}.csv"`);
+    return res.status(200).send(`\uFEFF${csv}`);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
 // Add a new character (Protected)
 app.post('/api/characters', authenticateToken, authorizeApps(['admin']), async (req, res) => {
-  let { char, pinyin, examples, audio, stroke } = req.body;
+  let { char, pinyin, examples, audio, stroke } = normalizeCharacterRecord(req.body);
   
   if (!char) {
     return res.status(400).json({ message: 'Character is required' });
   }
+  if (char.length !== 1) {
+    return res.status(400).json({ message: 'Character must be a single Chinese character' });
+  }
 
-  // If pinyin is missing, try to fetch from DeepSeek
   if (!pinyin) {
     try {
       const details = await fetchCharDetails(char);
       pinyin = details.pinyin;
       examples = details.examples;
-      audio = details.audio; // Get audio from AI fetch
-      stroke = details.stroke; // Get stroke from AI fetch
+      audio = details.audio;
+      stroke = details.stroke;
     } catch (error) {
       console.error('AI Fetch Error:', error.message);
-      // Allow proceeding if manual entry is provided, otherwise fail
       if (!pinyin) {
         return res.status(500).json({ message: 'Failed to auto-generate Pinyin. Please enter manually or check API key.' });
       }
@@ -268,6 +489,65 @@ app.post('/api/characters', authenticateToken, authorizeApps(['admin']), async (
       return res.status(409).json({ message: 'This character with pinyin already exists' });
     }
     res.status(400).json({ message: err.message });
+  }
+});
+
+app.post('/api/characters/batch-import', authenticateToken, authorizeApps(['admin']), async (req, res) => {
+  try {
+    const incoming = Array.isArray(req.body?.items) ? req.body.items : [];
+    const asyncEnrichMedia = req.body?.asyncEnrichMedia === true;
+    if (!incoming.length) {
+      return res.status(400).json({ message: 'Import items are required' });
+    }
+    const summary = {
+      total: incoming.length,
+      created: 0,
+      skipped: 0,
+      invalid: 0,
+      duplicatesInFile: 0,
+      duplicatedEntries: [],
+    };
+    const keysInFile = new Set();
+    const records = [];
+    incoming.forEach((raw) => {
+      const record = normalizeCharacterRecord(raw);
+      if (!record.char || record.char.length !== 1) {
+        summary.invalid += 1;
+        return;
+      }
+      const key = `${record.char}__${record.pinyin || ''}`;
+      if (keysInFile.has(key)) {
+        summary.duplicatesInFile += 1;
+        return;
+      }
+      keysInFile.add(key);
+      records.push(record);
+    });
+
+    for (let i = 0; i < records.length; i += 1) {
+      const item = records[i];
+      if (!item.pinyin) {
+        summary.invalid += 1;
+        continue;
+      }
+      const existed = await Character.findOne({ char: item.char, pinyin: item.pinyin }).lean();
+      if (existed) {
+        summary.skipped += 1;
+        if (summary.duplicatedEntries.length < 20) {
+          summary.duplicatedEntries.push({ char: item.char, pinyin: item.pinyin });
+        }
+      } else {
+        const created = await Character.create(item);
+        if (asyncEnrichMedia) {
+          enrichCharacterMediaAsync(created._id, created.char, created.pinyin);
+        }
+        summary.created += 1;
+      }
+    }
+
+    return res.status(200).json(summary);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
   }
 });
 
@@ -303,6 +583,190 @@ app.delete('/api/characters/:id', authenticateToken, authorizeApps(['admin']), v
     res.json({ message: 'Character deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/word-pairs', authenticateToken, authorizeApps(['portal', 'admin']), async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    const random = req.query.random === 'true';
+    const filters = buildWordPairFilters(req);
+
+    if (random) {
+      const sampleSize = Math.max(1, Math.min(parseInt(req.query.count) || 5, 50));
+      const data = await WordPair.aggregate([{ $match: filters }, { $sample: { size: sampleSize } }]);
+      return res.json({
+        data,
+        meta: {
+          total: data.length,
+          page: 1,
+          limit: sampleSize,
+          totalPages: 1,
+        },
+      });
+    }
+
+    const data = await WordPair.find(filters)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await WordPair.countDocuments(filters);
+
+    return res.json({
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/word-pairs/export', authenticateToken, authorizeApps(['admin']), async (req, res) => {
+  try {
+    const filters = buildWordPairFilters(req);
+    const data = await WordPair.find(filters).sort({ createdAt: -1 });
+    const header = ['en', 'zh', 'category', 'difficulty', 'createdAt'];
+    const lines = [header.join(',')];
+    data.forEach((item) => {
+      lines.push(
+        [
+          escapeCsv(item.en),
+          escapeCsv(item.zh),
+          escapeCsv(item.category),
+          escapeCsv(item.difficulty),
+          escapeCsv(item.createdAt ? item.createdAt.toISOString() : ''),
+        ].join(','),
+      );
+    });
+    const csv = lines.join('\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="word-pairs-${Date.now()}.csv"`);
+    return res.status(200).send(`\uFEFF${csv}`);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/word-pairs/batch-import', authenticateToken, authorizeApps(['admin']), async (req, res) => {
+  try {
+    const incoming = Array.isArray(req.body?.items) ? req.body.items : [];
+    if (!incoming.length) {
+      return res.status(400).json({ message: 'Import items are required' });
+    }
+    const summary = {
+      total: incoming.length,
+      created: 0,
+      skipped: 0,
+      invalid: 0,
+      duplicatesInFile: 0,
+      duplicatedEntries: [],
+    };
+    const keysInFile = new Set();
+    const records = [];
+    incoming.forEach((raw) => {
+      const record = normalizeWordPairRecord(raw);
+      if (!record.en || !record.zh) {
+        summary.invalid += 1;
+        return;
+      }
+      const key = `${record.en.toLowerCase()}__${record.zh}`;
+      if (keysInFile.has(key)) {
+        summary.duplicatesInFile += 1;
+        return;
+      }
+      keysInFile.add(key);
+      records.push(record);
+    });
+
+    for (let i = 0; i < records.length; i += 1) {
+      const item = records[i];
+      const existed = await WordPair.findOne({ en: item.en, zh: item.zh }).lean();
+      if (existed) {
+        summary.skipped += 1;
+        if (summary.duplicatedEntries.length < 20) {
+          summary.duplicatedEntries.push({ en: item.en, zh: item.zh });
+        }
+      } else {
+        await WordPair.create(item);
+        summary.created += 1;
+      }
+    }
+
+    return res.status(200).json(summary);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/word-pairs', authenticateToken, authorizeApps(['admin']), async (req, res) => {
+  try {
+    const { en, zh, category, difficulty } = req.body;
+    if (!en || !zh) {
+      return res.status(400).json({ message: 'English and Chinese are required' });
+    }
+    const newWordPair = new WordPair({
+      en: String(en).trim(),
+      zh: String(zh).trim(),
+      category: category ? String(category).trim() : 'general',
+      difficulty: normalizeWordPairDifficulty(difficulty),
+    });
+    const saved = await newWordPair.save();
+    return res.status(201).json(saved);
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'This word pair already exists' });
+    }
+    return res.status(400).json({ message: err.message });
+  }
+});
+
+app.put('/api/word-pairs/:id', authenticateToken, authorizeApps(['admin']), validateWordPairId, async (req, res) => {
+  try {
+    const { en, zh, category, difficulty } = req.body;
+    const wordPair = await WordPair.findById(req.params.id);
+    if (!wordPair) {
+      return res.status(404).json({ message: 'Word pair not found' });
+    }
+    if (en !== undefined) {
+      wordPair.en = String(en).trim();
+    }
+    if (zh !== undefined) {
+      wordPair.zh = String(zh).trim();
+    }
+    if (category !== undefined) {
+      wordPair.category = String(category).trim() || 'general';
+    }
+    if (difficulty !== undefined) {
+      wordPair.difficulty = normalizeWordPairDifficulty(difficulty);
+    }
+    const updated = await wordPair.save();
+    return res.json(updated);
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'This word pair already exists' });
+    }
+    return res.status(400).json({ message: err.message });
+  }
+});
+
+app.delete('/api/word-pairs/:id', authenticateToken, authorizeApps(['admin']), validateWordPairId, async (req, res) => {
+  try {
+    const wordPair = await WordPair.findById(req.params.id);
+    if (!wordPair) {
+      return res.status(404).json({ message: 'Word pair not found' });
+    }
+    await wordPair.deleteOne();
+    return res.json({ message: 'Word pair deleted' });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
   }
 });
 

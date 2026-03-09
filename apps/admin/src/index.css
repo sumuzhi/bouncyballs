@@ -1,48 +1,105 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #F9FAFC;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --app-bg: radial-gradient(circle at 8% 4%, #f8e9ff 0%, #eef8ff 42%, #f9f6ff 100%);
+  --text-main: #1f1748;
+  --card-start: #ffffff;
+  --card-end: #f3ecff;
+  --card-border: #d8cbff;
+  --card-shadow: 0 16px 46px rgba(80, 29, 173, 0.16);
+  --title-color: #2a0f66;
+  --subtitle-color: #6f58b6;
+  --brand-start: #7c3aed;
+  --brand-end: #06b6d4;
+  --accent-cyan: #0ea5e9;
+  --sidebar-start: rgba(242, 233, 255, 0.95);
+  --sidebar-end: rgba(232, 246, 255, 0.95);
+  --sidebar-border: rgba(146, 106, 240, 0.35);
+  --sidebar-inset: rgba(34, 211, 238, 0.2);
+  --menu-text: #6048a3;
+  --menu-hover-text: #2a0f66;
+  --menu-selected-bg: linear-gradient(130deg, rgba(124, 58, 237, 0.18), rgba(14, 165, 233, 0.18));
+  --menu-selected-text: #2a0f66;
+  --topbar-border: rgba(124, 58, 237, 0.2);
+  --topbar-title: #4f33a6;
+  --logout-color: #5d3cbc;
+  --logout-border: rgba(124, 58, 237, 0.32);
+  --logout-bg: rgba(124, 58, 237, 0.1);
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+[data-theme='dark'] {
+  --app-bg: radial-gradient(circle at 8% 4%, #291253 0%, #120725 40%, #090417 100%);
+  --text-main: #f5ecff;
+  --card-start: #21113f;
+  --card-end: #130829;
+  --card-border: #3d2a7c;
+  --card-shadow: 0 16px 46px rgba(8, 4, 18, 0.5);
+  --title-color: #f0e6ff;
+  --subtitle-color: #b9a3ef;
+  --brand-start: #7c3aed;
+  --brand-end: #06b6d4;
+  --accent-cyan: #22d3ee;
+  --sidebar-start: rgba(32, 11, 72, 0.96);
+  --sidebar-end: rgba(14, 6, 34, 0.96);
+  --sidebar-border: rgba(124, 58, 237, 0.35);
+  --sidebar-inset: rgba(34, 211, 238, 0.15);
+  --menu-text: #b8a8ea;
+  --menu-hover-text: #f0ebff;
+  --menu-selected-bg: linear-gradient(130deg, rgba(124, 58, 237, 0.42), rgba(14, 165, 233, 0.32));
+  --menu-selected-text: #ffffff;
+  --topbar-border: rgba(124, 58, 237, 0.16);
+  --topbar-title: #d7c8ff;
+  --logout-color: #e8deff;
+  --logout-border: rgba(166, 143, 243, 0.45);
+  --logout-bg: rgba(124, 58, 237, 0.16);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--app-bg);
+  color: var(--text-main);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 .neo-card {
-  background: #FFFFFF;
-  border-radius: 24px;
-  padding: 30px;
-  box-shadow: 0 10px 30px rgba(157, 132, 255, 0.08);
-  margin-bottom: 30px;
-  border: none;
-  transition: transform 0.2s ease;
-}
-
-.neo-card:hover {
-  transform: translateY(-2px);
+  background: linear-gradient(160deg, var(--card-start) 0%, var(--card-end) 100%);
+  border-radius: 20px;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
 }
 
 .list-header {
   font-size: 18px;
-  color: #4A4A68;
+  color: var(--title-color);
   font-weight: 800;
-  margin: 0 0 20px;
-  padding-left: 10px;
-  border-left: 4px solid #9D84FF;
+  margin: 0;
 }
 
 @keyframes playing-wave {
-  0% { transform: scale(1); color: #9D84FF; }
-  50% { transform: scale(1.3); color: #FFB6E1; }
-  100% { transform: scale(1); color: #9D84FF; }
+  0% {
+    transform: scale(1);
+    color: var(--brand-start);
+  }
+  50% {
+    transform: scale(1.22);
+    color: var(--accent-cyan);
+  }
+  100% {
+    transform: scale(1);
+    color: var(--brand-start);
+  }
 }
 
 .playing-icon {
   animation: playing-wave 1s infinite ease-in-out;
-  color: #9D84FF !important;
+  color: var(--brand-start) !important;
 }

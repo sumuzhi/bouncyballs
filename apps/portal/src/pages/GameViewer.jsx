@@ -18,10 +18,13 @@ const GameViewer = () => {
   const bouncyBallsUrl =
     import.meta.env.VITE_BOUNCY_BALLS_URL ||
     (import.meta.env.DEV ? 'http://localhost:3001/' : '/bouncy-balls/');
+  const gestureWordMatchUrl =
+    import.meta.env.VITE_GESTURE_WORD_MATCH_URL ||
+    (import.meta.env.DEV ? 'http://localhost:3004/' : '/gesture-word-match/');
 
-  // Map gameId to url
   const gameMap = {
     'bouncy-balls': bouncyBallsUrl,
+    'gesture-word-match': gestureWordMatchUrl,
   };
 
   const gameUrl = gameMap[gameId];
@@ -79,7 +82,11 @@ const GameViewer = () => {
         <div className={styles.divider} />
 
         <span className={styles.gameName}>
-          {gameId === 'bouncy-balls' ? '生字跳跳乐' : gameId}
+          {gameId === 'bouncy-balls'
+            ? '生字跳跳乐'
+            : gameId === 'gesture-word-match'
+              ? '手势单词配对'
+              : gameId}
         </span>
 
         <div className={styles.divider} />
@@ -136,6 +143,16 @@ const GameViewer = () => {
           props={wujieProps}
           plugins={[
             {
+              jsLoader(code, url) {
+                if (
+                  gameId === 'gesture-word-match' &&
+                  typeof url === 'string' &&
+                  /\/mediapipe\/vision_wasm(_nosimd)?_internal\.js(\?.*)?$/.test(url)
+                ) {
+                  return `${code}\nwindow.ModuleFactory = ModuleFactory;`;
+                }
+                return code;
+              },
               patchElementHook(element, iframeWindow) {
                 if (element.nodeName === 'STYLE') {
                   element.insertAdjacentElement = function (_position, ele) {

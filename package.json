@@ -5,11 +5,13 @@
   "scripts": {
     "server": "pnpm --filter server start:dev",
     "client": "pnpm --filter client dev",
+    "game:word-match": "pnpm --filter gesture-word-match dev",
     "admin": "pnpm --filter admin dev",
     "portal": "pnpm --filter portal dev",
     "install:all": "pnpm install",
     "seed": "pnpm --filter server seed",
     "build:client": "pnpm --filter client build",
+    "build:word-match": "pnpm --filter gesture-word-match build",
     "build:admin": "pnpm --filter admin build",
     "build:portal": "pnpm --filter portal build",
     "build:all": "pnpm -r build",

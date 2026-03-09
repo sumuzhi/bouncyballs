@@ -50,16 +50,18 @@ fi
 pnpm --filter portal build
 pnpm --filter admin build
 pnpm --filter client build
+pnpm --filter gesture-word-match build
 
 PROJECT_ROOT_CANON="$(cd "$PROJECT_ROOT" && pwd)"
 DEPLOY_ROOT_CANON="$(cd "$DEPLOY_ROOT" && pwd)"
 
 if [[ "$PROJECT_ROOT_CANON" != "$DEPLOY_ROOT_CANON" ]]; then
-  mkdir -p "$DEPLOY_ROOT/apps/portal" "$DEPLOY_ROOT/apps/admin" "$DEPLOY_ROOT/apps/client"
-  rm -rf "$DEPLOY_ROOT/apps/portal/dist" "$DEPLOY_ROOT/apps/admin/dist" "$DEPLOY_ROOT/apps/client/dist"
+  mkdir -p "$DEPLOY_ROOT/apps/portal" "$DEPLOY_ROOT/apps/admin" "$DEPLOY_ROOT/apps/client" "$DEPLOY_ROOT/apps/gesture-word-match"
+  rm -rf "$DEPLOY_ROOT/apps/portal/dist" "$DEPLOY_ROOT/apps/admin/dist" "$DEPLOY_ROOT/apps/client/dist" "$DEPLOY_ROOT/apps/gesture-word-match/dist"
   cp -R "$PROJECT_ROOT/apps/portal/dist" "$DEPLOY_ROOT/apps/portal/dist"
   cp -R "$PROJECT_ROOT/apps/admin/dist" "$DEPLOY_ROOT/apps/admin/dist"
   cp -R "$PROJECT_ROOT/apps/client/dist" "$DEPLOY_ROOT/apps/client/dist"
+  cp -R "$PROJECT_ROOT/apps/gesture-word-match/dist" "$DEPLOY_ROOT/apps/gesture-word-match/dist"
 fi
 
 if [[ "$RELOAD_NGINX" -eq 1 ]]; then

@@ -1,0 +1,42 @@
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './style.css';
+
+let root = null;
+let mounted = false;
+
+function renderApp() {
+  const container = document.getElementById('root');
+  if (!container) {
+    return;
+  }
+  if (!root) {
+    root = ReactDOM.createRoot(container);
+  }
+  root.render(<App />);
+}
+
+function mount() {
+  if (mounted) {
+    window.$wujie?.props?.closeLoading?.();
+    return;
+  }
+  renderApp();
+  mounted = true;
+  window.$wujie?.props?.closeLoading?.();
+}
+
+function unmount() {
+  if (root) {
+    root.unmount();
+    root = null;
+  }
+  mounted = false;
+}
+
+if (window.__POWERED_BY_WUJIE__) {
+  window.__WUJIE_MOUNT = mount;
+  window.__WUJIE_UNMOUNT = unmount;
+} else {
+  mount();
+}

@@ -1,0 +1,14 @@
+[
+  { "id": "w1", "en": "apple", "zh": "苹果", "level": "easy" },
+  { "id": "w2", "en": "banana", "zh": "香蕉", "level": "easy" },
+  { "id": "w3", "en": "book", "zh": "书", "level": "easy" },
+  { "id": "w4", "en": "cat", "zh": "猫", "level": "easy" },
+  { "id": "w5", "en": "dog", "zh": "狗", "level": "easy" },
+  { "id": "w6", "en": "water", "zh": "水", "level": "easy" },
+  { "id": "w7", "en": "school", "zh": "学校", "level": "medium" },
+  { "id": "w8", "en": "teacher", "zh": "老师", "level": "medium" },
+  { "id": "w9", "en": "window", "zh": "窗户", "level": "medium" },
+  { "id": "w10", "en": "family", "zh": "家庭", "level": "medium" },
+  { "id": "w11", "en": "hospital", "zh": "医院", "level": "hard" },
+  { "id": "w12", "en": "restaurant", "zh": "餐厅", "level": "hard" }
+]

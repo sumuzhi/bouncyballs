@@ -1,26 +1,71 @@
 .pageCenter {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: #f9fafc;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 16px;
 }
 
 .authCard {
-  width: 400px;
-  text-align: center;
+  width: min(100%, 420px);
+  border-radius: 20px !important;
+  border: 1px solid var(--card-border) !important;
+  box-shadow: var(--card-shadow) !important;
+  text-align: left;
+  padding: 6px !important;
+  background: linear-gradient(160deg, var(--card-start) 0%, var(--card-end) 100%) !important;
+}
+
+.tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.headIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(140deg, var(--brand-start), var(--brand-end));
+  color: #ffffff;
 }
 
 .title {
-  margin-bottom: 30px;
-  color: #4a4a68;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--title-color);
 }
 
-.submitBtn {
-  background: linear-gradient(135deg, #9d84ff 0%, #ffb6e1 100%) !important;
-  border: none !important;
-  height: 48px;
-  border-radius: 18px;
-  font-size: 16px;
-  font-weight: 700;
+.subtitle {
+  margin: 2px 0 12px;
+  color: var(--subtitle-color);
+  font-size: 13px;
+}
+
+.primaryBtn {
+  height: 40px;
+  border-radius: 10px;
+  font-weight: 600;
+  background: linear-gradient(140deg, var(--brand-start), var(--brand-end));
+  border-color: transparent;
+}
+
+.primaryBtn:hover {
+  background: linear-gradient(140deg, #6d28d9, #0284c7) !important;
+  border-color: transparent !important;
+}
+
+.themeSwitch {
+  color: var(--logout-color) !important;
+  border-color: var(--logout-border) !important;
+  background: var(--logout-bg) !important;
 }

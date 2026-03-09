@@ -26,7 +26,14 @@ const GameHall = () => {
       icon: '🏀',
       path: '/game/bouncy-balls'
     },
-    // Future games can be added here
+    {
+      id: 'gesture-word-match',
+      title: '手势单词配对',
+      description: '纯手势拖拽英文单词，快速匹配中文释义',
+      coverClassName: styles.gestureWordMatchCover,
+      icon: '🖐️',
+      path: '/game/gesture-word-match'
+    }
   ];
 
   const userMenu = {

@@ -1,0 +1,135 @@
+.shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  background: transparent;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 20px 14px;
+  background: linear-gradient(180deg, var(--sidebar-start), var(--sidebar-end));
+  border-right: 1px solid var(--sidebar-border);
+  box-shadow: inset -1px 0 0 var(--sidebar-inset);
+  backdrop-filter: blur(8px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 18px;
+}
+
+.brandIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: linear-gradient(140deg, var(--brand-start), var(--brand-end));
+}
+
+.brandText {
+  color: var(--title-color);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.menu {
+  border-inline-end: none !important;
+  background: transparent !important;
+  color: var(--menu-text) !important;
+}
+
+.menu :global(.ant-menu-item) {
+  margin: 6px 0 !important;
+  border-radius: 10px !important;
+  height: 40px !important;
+  line-height: 40px !important;
+}
+
+.menu :global(.ant-menu-item-selected) {
+  background: var(--menu-selected-bg) !important;
+  color: var(--menu-selected-text) !important;
+}
+
+.menu :global(.ant-menu-item:hover) {
+  color: var(--menu-hover-text) !important;
+}
+
+.main {
+  min-width: 0;
+}
+
+.topbar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--topbar-border);
+}
+
+.title {
+  color: var(--topbar-title);
+  font-weight: 600;
+}
+
+.logout {
+  color: var(--logout-color) !important;
+  border-color: var(--logout-border) !important;
+  background: var(--logout-bg) !important;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.themeSwitch {
+  color: var(--logout-color) !important;
+  border-color: var(--logout-border) !important;
+  background: var(--logout-bg) !important;
+}
+
+.content {
+  padding: 14px;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    padding: 10px 10px 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.35);
+  }
+
+  .brand {
+    padding: 0 6px 10px;
+  }
+
+  .menu {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 8px;
+  }
+
+  .menu :global(.ant-menu-item) {
+    margin: 0 6px 0 0 !important;
+    padding: 0 14px !important;
+    display: inline-flex !important;
+    align-items: center;
+  }
+}

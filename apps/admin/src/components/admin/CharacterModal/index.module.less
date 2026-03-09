@@ -1,68 +1,83 @@
 .formInput {
-  background: #f4f6fa !important;
-  border: none !important;
+  background: color-mix(in srgb, var(--card-end) 72%, white) !important;
+  border: 1px solid var(--card-border) !important;
 }
 
 .charInputDisabled {
-  background: #efefef !important;
-  border: none !important;
+  background: color-mix(in srgb, var(--card-end) 88%, black) !important;
+  border: 1px solid var(--card-border) !important;
 }
 
 .actionsRow {
   display: flex;
-  gap: 16px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .aiBtn {
   flex: 1;
-  background: #a0eacd !important;
-  color: #366a55 !important;
-  border: none !important;
-  height: 48px;
-  font-weight: 700;
+  background: var(--menu-selected-bg) !important;
+  color: var(--title-color) !important;
+  border: 1px solid var(--card-border) !important;
+  height: 42px;
+  font-weight: 600;
 }
 
 .saveBtn {
   flex: 1;
-  background: linear-gradient(135deg, #9d84ff 0%, #ffb6e1 100%) !important;
-  border: none !important;
-  height: 48px;
-  font-weight: 700;
+  background: var(--brand-start) !important;
+  border: 1px solid var(--brand-start) !important;
+  color: #ffffff !important;
+  height: 42px;
+  font-weight: 600;
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--brand-start) 34%, transparent);
+}
+
+.saveBtn:hover {
+  background: color-mix(in srgb, var(--brand-start) 86%, #000000) !important;
+  border-color: color-mix(in srgb, var(--brand-start) 86%, #000000) !important;
+  color: #ffffff !important;
+}
+
+.saveBtn:focus,
+.saveBtn:active {
+  background: color-mix(in srgb, var(--brand-start) 82%, #000000) !important;
+  border-color: color-mix(in srgb, var(--brand-start) 82%, #000000) !important;
+  color: #ffffff !important;
 }
 
 .infoCardAudio {
-  margin-top: 16px;
+  margin-top: 14px;
   display: flex;
   align-items: center;
-  background: #f0edff;
+  background: var(--menu-selected-bg);
   padding: 10px;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 .infoCardStroke {
-  margin-top: 16px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
-  background: #fff0f5;
+  background: var(--menu-selected-bg);
   padding: 10px;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 .audioIcon {
-  color: #9d84ff;
+  color: var(--brand-start);
   margin-right: 10px;
   font-size: 18px;
 }
 
 .strokeIcon {
-  color: #ff69b4;
+  color: var(--brand-end);
   margin-right: 10px;
   font-size: 18px;
 }
 
 .infoText {
   margin-right: 10px;
-  color: #4a4a68;
+  color: var(--title-color);
   font-size: 14px;
 }
