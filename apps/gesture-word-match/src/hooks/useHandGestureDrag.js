@@ -4,6 +4,8 @@ import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 const DEFAULT_FIST_START_RATIO = 1.08;
 const FIST_HYSTERESIS = 0.12;
 const SMOOTHING_FACTOR = 0.35;
+const HAND_LANDMARKER_WASM_CDN_URL =
+  'https://lexiplay-1301809435.cos.ap-guangzhou.myqcloud.com/vision_wasm_internal.wasm';
 
 function distance(a, b) {
   const dx = a.x - b.x;
@@ -93,9 +95,8 @@ function resolveWasmBaseUrl() {
 }
 
 function resolveModelCandidates() {
-  const runtimeBaseUrl = resolveRuntimeBaseUrl();
   const candidates = [];
-  candidates.push(joinBaseUrl(runtimeBaseUrl, 'models/hand_landmarker.task'));
+  candidates.push('https://lexiplay-1301809435.cos.ap-guangzhou.myqcloud.com/hand_landmarker.task');
   if (import.meta.env.VITE_HAND_LANDMARKER_MODEL_URL) {
     candidates.push(import.meta.env.VITE_HAND_LANDMARKER_MODEL_URL);
   }
@@ -117,7 +118,20 @@ async function ensureModuleFactoryReady(wasmBaseUrl) {
     `${code}\nreturn typeof ModuleFactory !== "undefined" ? ModuleFactory : (typeof module !== "undefined" && module.exports ? module.exports : undefined);`,
   )();
   if (factory) {
-    window.ModuleFactory = factory.default || factory;
+    const baseFactory = factory.default || factory;
+    window.ModuleFactory = (moduleOptions = {}) =>
+      baseFactory({
+        ...moduleOptions,
+        locateFile: (path, prefix) => {
+          if (path === 'vision_wasm_internal.wasm') {
+            return HAND_LANDMARKER_WASM_CDN_URL;
+          }
+          if (typeof moduleOptions.locateFile === 'function') {
+            return moduleOptions.locateFile(path, prefix);
+          }
+          return `${prefix}${path}`;
+        },
+      });
     return;
   }
   throw new Error('ModuleFactory preload failed');
