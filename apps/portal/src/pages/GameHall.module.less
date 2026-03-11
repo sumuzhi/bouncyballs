@@ -13,6 +13,7 @@
   align-items: center;
   margin-bottom: 60px;
   border-radius: 16px;
+  border: 1px solid var(--color-line);
 }
 
 .brand {
@@ -23,13 +24,13 @@
 
 .brandIcon {
   font-size: 24px;
-  color: #333;
+  color: var(--color-teal);
 }
 
 .brandTitle {
   margin: 0 !important;
   font-weight: 600 !important;
-  color: #333 !important;
+  color: var(--color-ink) !important;
 }
 
 .userArea {
@@ -40,11 +41,11 @@
 }
 
 .userName {
-  color: #333;
+  color: var(--color-ink);
 }
 
 .userAvatar {
-  background-color: #007aff;
+  background-color: var(--color-teal);
 }
 
 .main {
@@ -70,13 +71,13 @@
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   overflow: hidden;
-  border: none;
-  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--color-line);
+  background: var(--color-foam);
 }
 
 .gameCard:hover {
   transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 22px 46px rgba(7, 37, 39, 0.25);
 }
 
 .gameCover {
@@ -89,11 +90,11 @@
 }
 
 .bouncyBallsCover {
-  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+  background: linear-gradient(135deg, #f7a36b 0%, #f8c56c 55%, #ffe2b3 100%);
 }
 
 .gestureWordMatchCover {
-  background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+  background: linear-gradient(135deg, #7ecbbf 0%, #bfe9dd 55%, #e7f7f0 100%);
 }
 
 .gameIcon {
@@ -112,17 +113,19 @@
 .gameInfo {
   flex: 1;
   padding: 20px;
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--color-foam-strong);
   backdrop-filter: blur(20px);
 }
 
 .gameTitle {
   margin: 0 0 8px !important;
   font-size: 20px !important;
+  color: var(--color-ink) !important;
 }
 
 .gameDescription {
   font-size: 14px;
   line-height: 1.4;
   display: block;
+  color: var(--color-ink-muted);
 }

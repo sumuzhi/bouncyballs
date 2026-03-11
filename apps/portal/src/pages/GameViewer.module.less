@@ -4,7 +4,7 @@
   height: auto;
   position: relative;
   overflow-y: auto;
-  background: #fff;
+  background: var(--color-paper);
 }
 
 .notFound {
@@ -12,8 +12,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #fff;
+  color: var(--color-ink);
   font-size: 24px;
+  background: var(--bg-gradient);
 }
 
 .backButton {
@@ -31,10 +32,10 @@
   align-items: center;
   gap: 12px;
   border-radius: 50px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(15, 109, 107, 0.78);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 26px rgba(7, 37, 39, 0.26);
   transition: opacity 0.3s ease;
   opacity: 0.8;
 }
@@ -51,7 +52,7 @@
 .divider {
   width: 1px;
   height: 16px;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .gameName {
@@ -72,7 +73,7 @@
   justify-content: center;
   align-items: center;
   z-index: 10;
-  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #a18cd1 100%);
+  background: linear-gradient(135deg, #ffdcc5 0%, #f5c56a 45%, #7cc9bd 100%);
   background-size: 400% 400%;
   animation: gradientBG 10s ease infinite;
   transition: all 0.5s ease;
@@ -81,8 +82,9 @@
 .loadingCard {
   padding: 50px 80px;
   border-radius: 40px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1), 0 0 0 12px rgba(255, 255, 255, 0.4);
+  background: var(--color-foam-strong);
+  border: 1px solid var(--color-line);
+  box-shadow: 0 24px 60px rgba(7, 37, 39, 0.18), 0 0 0 10px rgba(255, 255, 255, 0.32);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -104,29 +106,27 @@
 }
 
 .dotRed {
-  background: #ff6b6b;
+  background: #e26b5a;
   animation-delay: 0s;
 }
 
 .dotTeal {
-  background: #4ecdc4;
+  background: #0f6d6b;
   animation-delay: 0.1s;
 }
 
 .dotYellow {
-  background: #ffe66d;
+  background: #f2b24c;
   animation-delay: 0.2s;
 }
 
 .dotOrange {
-  background: #ff9f43;
+  background: #f1c97a;
   animation-delay: 0.3s;
 }
 
 .loadingText {
-  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #ff9f43);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--color-teal-deep);
   font-family: var(--font-family-system);
   font-size: 24px;
   font-weight: 800;
