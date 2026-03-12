@@ -57,7 +57,7 @@ flowchart LR
   Client -- "麦克风 · Web Audio" --> DeviceA[(Audio Input)]
   Gesture -- "摄像头 · MediaPipe" --> DeviceB[(Camera Input)]
 
-  Nginx[Nginx 网关(可选)] --> Portal
+  Nginx["Nginx 网关（可选）"] --> Portal
   Nginx --> Admin
   Nginx --> Client
   Nginx --> Gesture
