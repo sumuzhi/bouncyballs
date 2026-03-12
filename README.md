@@ -52,10 +52,10 @@ flowchart LR
 
   Server --> MongoDB[(MongoDB)]
   Server --> DeepSeek[DeepSeek AI]
-  Server --> ZDIC[汉典资源(音频/笔顺)]
+  Server --> ZDIC["汉典资源（音频/笔顺）"]
 
-  Client -- 麦克风(Web Audio) --> DeviceA[(Audio Input)]
-  Gesture -- 摄像头(MediaPipe) --> DeviceB[(Camera Input)]
+  Client -- "麦克风 · Web Audio" --> DeviceA[(Audio Input)]
+  Gesture -- "摄像头 · MediaPipe" --> DeviceB[(Camera Input)]
 
   Nginx[Nginx 网关(可选)] --> Portal
   Nginx --> Admin
